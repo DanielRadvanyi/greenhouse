@@ -73,7 +73,7 @@ static void idle_delay()
 	vTaskDelay(1);
 }
 
-void taskReadRH(void *params)
+void taskReadSensor(void *params)
 {
 	(void) params;
 
@@ -83,6 +83,13 @@ void taskReadRH(void *params)
 	node3.begin(9600); // all nodes must operate at the same speed!
 	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister RH(&node3, 256, true);
+
+	vTaskDelay(1000);
+
+	ModbusMaster node4(240); // Create modbus object that connects to slave id 240
+	node4.begin(9600); // all nodes must operate at the same speed!
+	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister CO2(&node4, 256, true);
 
 	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
 	relay.write(0);
@@ -99,30 +106,36 @@ void taskReadRH(void *params)
 	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
 	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
-	// configure display geometry
-	lcd->begin(16, 2);
-	// set the cursor to column 0, line 1
-	// (note: line 1 is the second row, since counting begins with 0):
-	lcd->setCursor(0, 0);
-	// Print a message to the LCD.
-	lcd->print("MQTT_FreeRTOS");
-
 
 	while(true) {
-		float rh;
-		char buffer[32];
+		float rh, co2;
+		char buffer2[32];
+		char buffer1[32];
 
 		vTaskDelay(2000);
 
 		rh = RH.read()/10.0;
-		snprintf(buffer, 32, "RH=%5.1f%%", rh);
-		printf("%s\n",buffer);
-		lcd->setCursor(0, 1);
-		// Print a message to the LCD.
-		lcd->print(buffer);
+		snprintf(buffer1, 32, "RH=%5.1f%%", rh);
+		printf("%s\n",buffer1);
 
+		lcd->begin(16, 2);
+		lcd->setCursor(0, 0);
+		// Print a message to the LCD.
+		lcd->print(buffer1);
+
+		vTaskDelay(2000);
+
+		co2 = CO2.read()/10.0;
+		snprintf(buffer2, 32, "CO2=%5.1f%%", co2);
+		printf("%s\n",buffer2);
+
+		lcd->setCursor(0, 1);
+		lcd->print(buffer2);
 	}
+
+	vTaskDelay(1);
 }
+
 
 /**
  * @brief	main routine for FreeRTOS blinky example
@@ -134,11 +147,10 @@ int main(void)
 
 	heap_monitor_setup();
 
-	xTaskCreate(taskReadRH, "read RH",
+	xTaskCreate(taskReadSensor, "read sensor",
 				configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
 				(TaskHandle_t *) NULL);
 
-	DEBUGOUT("Reading RH done");
 
 	/* Start the scheduler */
 	vTaskStartScheduler();
