@@ -16,10 +16,16 @@
 #endif
 #endif
 
-// Includes
 #include <cr_section_macros.h>
+
+// TODO: insert other include files here
+
+// TODO: insert other definitions and declarations here
+
 #include "FreeRTOS.h"
+#include <cr_section_macros.h>
 #include "task.h"
+#include <stdint.h>
 #include "heap_lock_monitor.h"
 #include "retarget_uart.h"
 
@@ -38,15 +44,24 @@ static QueueHandle_t q;
 static DigitalIoPin siga(1, 6, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 8, DigitalIoPin::input, true);
 
-
-/*****************************************************************************
- * Private functions
- ****************************************************************************/
 typedef struct TaskData {
 	LpcUart *uart;
 	Fmutex *guard;
 } TaskData;
 
+/*****************************************************************************
+ * Private functions
+ ****************************************************************************/
+
+/* Sets up system hardware */
+static void prvSetupHardware(void)
+{
+	SystemCoreClockUpdate();
+	Board_Init();
+
+	/* Initial LED0 state is off */
+	Board_LED_Set(0, false);
+}
 /*****************************************************************************
  * Interrupts
  ****************************************************************************/
@@ -62,20 +77,18 @@ void PIN_INT0_IRQHandler(void) {
 	portEND_SWITCHING_ISR(xHigherPriorityWoken);
 }
 }
-
 /*****************************************************************************
  * Public functions
  ****************************************************************************/
-/* Sets up system hardware */
-static void prvSetupHardware(void)
-{
-	SystemCoreClockUpdate();
-	Board_Init();
+/* the following is required if runtime statistics are to be collected */
+extern "C" {
 
-	/* Initial LED0 state is off */
-	Board_LED_Set(0, false);
+void vConfigureTimerForRunTimeStats( void ) {
+	Chip_SCT_Init(LPC_SCTSMALL1);
+	LPC_SCTSMALL1->CONFIG = SCT_CONFIG_32BIT_COUNTER;
+	LPC_SCTSMALL1->CTRL_U = SCT_CTRL_PRE_L(255) | SCT_CTRL_CLRCTR_L; // set prescaler to 256 (255 + 1), and start timer
 }
-
+}
 static void vConfigureInterrupts(void){
 	/* Initialize PININT driver */
 	Chip_PININT_Init(LPC_GPIO_PIN_INT);
@@ -104,37 +117,77 @@ static void vConfigureInterrupts(void){
 	NVIC_EnableIRQ(PIN_INT0_IRQn);
 }
 
-
-/* the following is required if runtime statistics are to be collected */
-extern "C" {
-
-void vConfigureTimerForRunTimeStats( void ) {
-	Chip_SCT_Init(LPC_SCTSMALL1);
-	LPC_SCTSMALL1->CONFIG = SCT_CONFIG_32BIT_COUNTER;
-	LPC_SCTSMALL1->CTRL_U = SCT_CTRL_PRE_L(255) | SCT_CTRL_CLRCTR_L; // set prescaler to 256 (255 + 1), and start timer
-}
-
-}
 /* end runtime statictics collection */
-static void idle_delay(){
+static void idle_delay()
+{
 	vTaskDelay(1);
 }
 
-/*****************************************************************************
- * FreeRTOS Tasks
- ****************************************************************************/
-/*
-Fmutex mutex;
+void taskReadSensor(void *pvParameters){
+	TaskData *t = static_cast<TaskData *>(pvParameters);
 
-bool latest;
-void vRfixer(void *pvParameters){
-	mutex.lock();
-	while(1){
-		mutex.lock();
-		vTaskDelay(100);
+	//portENTER_CRITICAL();
+	retarget_init();
+
+	ModbusMaster node3(241); // Create modbus object that connects to slave id 241 (HMP60)
+	node3.begin(9600); // all nodes must operate at the same speed!
+	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister RH(&node3, 256, true);
+
+	vTaskDelay(1000);
+
+	ModbusMaster node4(240); // Create modbus object that connects to slave id 240
+	node4.begin(9600); // all nodes must operate at the same speed!
+	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister CO2(&node4, 256, true);
+	//portEXIT_CRITICAL();
+
+	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
+	relay.write(0);
+
+	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a4(0, 6, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a5(0, 7, DigitalIoPin::pullup, true);
+
+	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
+	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
+	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
+	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
+	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
+	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
+	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
+
+	while(true) {
+		float rh, co2;
+		char buffer2[32];
+		char buffer1[32];
+
+		vTaskDelay(2000);
+
+		rh = RH.read()/10.0;
+		snprintf(buffer1, 32, "RH=%5.1f%%\r\n", rh);
+		t->guard->lock();
+		t->uart->write(buffer1);
+		t->guard->unlock();
+
+		lcd->begin(16, 2);
+		lcd->setCursor(0, 0);
+		// Print a message to the LCD.
+		lcd->print(buffer1);
+
+		vTaskDelay(2000);
+
+		co2 = CO2.read()/10.0;
+		snprintf(buffer2, 32, "CO2=%5.1f%%\r\n", co2);
+		t->guard->lock();
+		t->uart->write(buffer2);
+		t->guard->unlock();
+
+		lcd->setCursor(0, 1);
+		lcd->print(buffer2);
 	}
-
-}*/
+}
 
 void vRotary(void *pvParameters){
 	TaskData *t = static_cast<TaskData *>(pvParameters);
@@ -186,11 +239,11 @@ void vRotary(void *pvParameters){
 
 void vRotaryButton(void *pvParameters){
 	TaskData *t = static_cast<TaskData *>(pvParameters);
-	while(1){
+	while(1){/**/
 		DigitalIoPin button(1, 8, DigitalIoPin::pullup, true);
 		if(button.read()){
 			t->guard->lock();
-			t->uart->write((const char*)"button pressed");
+			t->uart->write((const char*)"button pressed\r\n");
 			t->guard->unlock();
 			vTaskDelay(350);
 		}
@@ -198,75 +251,13 @@ void vRotaryButton(void *pvParameters){
 	}
 }
 
-
-/* DataRead
-void taskReadRH(void *params){
-	(void) params;
-
-	retarget_init();
-
-	ModbusMaster node3(241); // Create modbus object that connects to slave id 241 (HMP60)
-	node3.begin(9600); // all nodes must operate at the same speed!
-	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
-	ModbusRegister RH(&node3, 256, true);
-
-	ModbusMaster node4(240); // Create modbus object that connects to slave id 241 (HMP60)
-	node4.begin(9600); // all nodes must operate at the same speed!
-	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
-	ModbusRegister RH(&node4, 256, true);
-
-	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
-	relay.write(0);
-
-	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a4(0, 6, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a5(0, 7, DigitalIoPin::pullup, true);
-
-	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
-	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
-	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
-	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
-	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
-	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
-	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
-	// configure display geometry
-	lcd->begin(16, 2);
-	// set the cursor to column 0, line 1
-	// (note: line 1 is the second row, since counting begins with 0):
-	lcd->setCursor(0, 0);
-	// Print a message to the LCD.
-	lcd->print("MQTT_FreeRTOS");
-
-	while(true) {
-		float rh;
-		char buffer[32];
-
-		vTaskDelay(2000);
-
-		rh = RH.read()/10.0;
-		snprintf(buffer, 32, "RH=%5.1f%%", rh);
-		printf("%s\n",buffer);
-		lcd->setCursor(0, 1);
-		// Print a message to the LCD.
-		lcd->print(buffer);
-
-	}
-}*/
-
 int main(void)
 {
 	prvSetupHardware();
 	heap_monitor_setup();
 	vConfigureInterrupts();
 
-	/*
-	xTaskCreate(taskReadRH, "read RH",
-			configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
-			(TaskHandle_t *) NULL);*/
-
-
-	//uart setup
+	/*uart setup*/
 	LpcPinMap none = { .port = -1, .pin = -1}; // unused pin has negative values in it
 	LpcPinMap txpin = { .port = 0, .pin = 18 }; // transmit pin that goes to debugger's UART->USB converter
 	LpcPinMap rxpin = { .port = 0, .pin = 13 }; // receive pin that goes to debugger's UART->USB converter
@@ -282,23 +273,22 @@ int main(void)
 	};
 	LpcUart *uart = new LpcUart(cfg);
 	Fmutex *guard = new Fmutex();
-	q = xQueueCreate(50, sizeof(bool));
 	static TaskData t;
 	t.uart = uart;
 	t.guard = guard;
+	q = xQueueCreate(50, sizeof(bool));
+	xTaskCreate(taskReadSensor, "read sensor",
+			configMINIMAL_STACK_SIZE * 5, &t, (tskIDLE_PRIORITY + 1UL),
+			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotary, "vRotary",
-		configMINIMAL_STACK_SIZE + 256, &t, (tskIDLE_PRIORITY + 1UL),
-		(TaskHandle_t *) NULL);
+			configMINIMAL_STACK_SIZE + 256, &t, (tskIDLE_PRIORITY + 1UL),
+			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotaryButton, "vRotaryButton",
-		configMINIMAL_STACK_SIZE + 128, &t, (tskIDLE_PRIORITY + 1UL),
-		(TaskHandle_t *) NULL);
-
-	/*xTaskCreate(vRfixer, "vRfixer",
-			configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL),
+			configMINIMAL_STACK_SIZE + 128, &t, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);
-*/
+
 	/* Start the scheduler */
 	vTaskStartScheduler();
 
