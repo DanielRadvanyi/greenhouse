@@ -64,7 +64,8 @@ src/Greenhouse.o src/Greenhouse.d: ../src/Greenhouse.cpp \
  C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\FreeRTOS\src\include/semphr.h \
  C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\FreeRTOS\src\include/queue.h \
  C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\FreeRTOS\src\include/task.h \
- ../src/Fmutex.h ../src/DigitalIoPin.h ../src/LiquidCrystal.h
+ ../src/Fmutex.h ../src/DigitalIoPin.h ../src/LiquidCrystal.h \
+ C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\FreeRTOS\src\include/queue.h
 C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_board_nxp_lpcxpresso_1549\inc/board.h:
 C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/chip.h:
 C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/lpc_types.h:
@@ -137,3 +138,4 @@ C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\F
 ../src/Fmutex.h:
 ../src/DigitalIoPin.h:
 ../src/LiquidCrystal.h:
+C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\FreeRTOS\src\include/queue.h:
