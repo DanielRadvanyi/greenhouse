@@ -1,5 +1,5 @@
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/sysctl_15xx.h:185:20:Chip_SYSCTL_PeriphReset	16	static
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/ritimer_15xx.h:151:20:Chip_RIT_EnableCompClear	16	static
+C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/sysctl_15xx.h:185:20:Chip_SYSCTL_PeriphReset	16	static
+C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/ritimer_15xx.h:151:20:Chip_RIT_EnableCompClear	16	static
 ../src/ritimer_15xx.c:51:6:Chip_RIT_Init	16	static
 ../src/ritimer_15xx.c:59:6:Chip_RIT_DeInit	16	static
 ../src/ritimer_15xx.c:66:6:Chip_RIT_SetCTRL	24	static

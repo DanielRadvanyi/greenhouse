@@ -6,7 +6,7 @@
  * Generated linker script file for LPC1549
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v11.6.0 [Build 8187] [2022-07-13] on 13 Dec 2022, 13:10:24
+ * MCUXpresso IDE v11.5.0 [Build 7232] [2022-01-11] on Dec 13, 2022, 1:36:11 PM
  */
 
 INCLUDE "Greenhouse_Debug_library.ld"
@@ -83,7 +83,6 @@ SECTIONS
             . = ALIGN(4);
             /* End C++ */
     } > MFlash256
-
     /*
      * for exception handling/unwind - some Newlib functions (in common
      * with C++ and STDC++) use this.
@@ -249,9 +248,7 @@ SECTIONS
        PROVIDE(__end_noinit_RAM = .) ;
        PROVIDE(__end_noinit_Ram0_16 = .) ;        
     } > Ram0_16 AT> Ram0_16
-
     PROVIDE(_pvHeapStart = DEFINED(__user_heap_base) ? __user_heap_base : .);
-
     PROVIDE(_vStackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_Ram0_16 - 0);
 
     /* ## Create checksum value (used in startup) ## */

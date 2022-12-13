@@ -107,7 +107,6 @@ void taskReadRH(void *params)
 	// Print a message to the LCD.
 	lcd->print("MQTT_FreeRTOS");
 
-
 	while(true) {
 		float rh;
 		char buffer[32];
@@ -124,14 +123,9 @@ void taskReadRH(void *params)
 	}
 }
 
-/**
- * @brief	main routine for FreeRTOS blinky example
- * @return	Nothing, function should not exit
- */
 int main(void)
 {
 	prvSetupHardware();
-
 	heap_monitor_setup();
 
 	xTaskCreate(taskReadRH, "read RH",
