@@ -90,17 +90,19 @@ void taskReadSensor(void *params)
 	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister RH(&node3, 256, true);
 
-	vTaskDelay(100);
+	vTaskDelay(10);
 
-	ModbusMaster node4(240); // Create modbus object that connects to slave id 240
+	/*
+	ModbusMaster node4(241);
 	node4.begin(9600); // all nodes must operate at the same speed!
 	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
-	ModbusRegister CO2(&node4, 257, true);
+	ModbusRegister TEMP(&node4, 256, true);
+	*/
 
-	vTaskDelay(100);
-
-	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
-	relay.write(0);
+	ModbusMaster node5(240); // Create modbus object that connects to slave id 240
+	node5.begin(9600); // all nodes must operate at the same speed!
+	node5.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister CO2(&node5, 257, true);
 
 	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
 	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
@@ -111,28 +113,42 @@ void taskReadSensor(void *params)
 
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
 
-	while(true) {
+	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
+	relay.write(0);
+
+	while(true)
+	{
 		float rh, co2;
-		char buffer1[32], buffer2[32];
+		char buffer1[32], buffer3[32];
 
 		rh = RH.read()/10.0;
 		snprintf(buffer1, 32, "RH=%5.1f%%", rh);
 		printf("%s\n",buffer1);
 
-
 		lcd->begin(16, 2);
 		lcd->setCursor(0, 0);
-		// Print a message to the LCD.
 		lcd->print(buffer1);
+
+		/*
+		temp = TEMP.read();
+		snprintf(buffer2, 32, "TEMP=%5.1f%", temp);
+		printf("%s\n",buffer2);
+
+		lcd->setCursor(0, 0);
+		// Print a message to the LCD.
+		lcd->print(buffer2);
+		*/
 
 		vTaskDelay(10);
 
 		co2 = CO2.read();
-		snprintf(buffer2, 32, "CO2=%5.1f%", co2);
-		printf("%s\n",buffer2);
+		snprintf(buffer3, 32, "CO2=%5.1f", co2);
+		printf("%s\n",buffer3);
+
+		DEBUGOUT("%s\n",buffer3);
 
 		lcd->setCursor(0, 1);
-		lcd->print(buffer2);
+		lcd->print(buffer3);
 	}
 
 	vTaskDelay(10);
@@ -142,8 +158,6 @@ void taskReadSensor(void *params)
 void taskMenuTest(void *params) {
 
 	(void) params;
-
-	retarget_init();
 
 	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
 	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
@@ -174,7 +188,7 @@ void taskMenuTest(void *params) {
 	menu.event(MenuItem::show);
 
 	// TODO set up CO2 level value
-	vTaskDelay(10);
+	vTaskDelay(100);
 }
 
 /**
@@ -198,11 +212,9 @@ int main(void)
 				configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
 				(TaskHandle_t *) NULL);
 
-	/*
-	xTaskCreate(taskMenuTest, "test menu",
+	/*xTaskCreate(taskMenuTest, "test menu",
 				configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
-				(TaskHandle_t *) NULL);
-	*/
+				(TaskHandle_t *) NULL);*/
 
 	/* Start the scheduler */
 	vTaskStartScheduler();
