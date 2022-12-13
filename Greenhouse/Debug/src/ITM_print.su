@@ -1,0 +1,10 @@
+c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\arm-none-eabi\thumb\v7-m\nofp\bits\gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
+c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:6609:3:std::string std::__cxx11::to_string(int)	40	static
+../src/ITM_print.cpp:13:1:ITM_print::ITM_print()	16	static
+../src/ITM_print.cpp:18:1:ITM_print::~ITM_print()	16	static
+../src/ITM_print.cpp:18:1:virtual ITM_print::~ITM_print()	16	static
+../src/ITM_print.cpp:22:6:void ITM_print::print(int)	48	static
+../src/ITM_print.cpp:29:6:void ITM_print::print(const char*)	16	static
+../src/ITM_print.cpp:34:6:void ITM_print::print(std::string)	24	static
+c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\bits\charconv.h:47:5:unsigned int std::__detail::__to_chars_len(_Tp, int) [with _Tp = unsigned int]	32	static
+c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\bits\charconv.h:72:5:void std::__detail::__to_chars_10_impl(char*, unsigned int, _Tp) [with _Tp = unsigned int]	40	static

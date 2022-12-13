@@ -1,0 +1,6 @@
+../src/mqtt_demo/using_plaintext.c:51:10:uxRand	8	static
+../src/mqtt_demo/using_plaintext.c:55:10:get_ticks	8	static
+../src/mqtt_demo/using_plaintext.c:77:28:Plaintext_FreeRTOS_Connect	40	static
+../src/mqtt_demo/using_plaintext.c:123:28:Plaintext_FreeRTOS_Disconnect	24	static
+../src/mqtt_demo/using_plaintext.c:152:9:Plaintext_FreeRTOS_recv	32	static
+../src/mqtt_demo/using_plaintext.c:210:9:Plaintext_FreeRTOS_send	32	static

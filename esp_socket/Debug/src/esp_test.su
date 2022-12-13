@@ -1,0 +1,5 @@
+c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\arm-none-eabi\thumb\v7-m\nofp\bits\gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
+../src/esp_test.cpp:38:6:void vConfigureTimerForRunTimeStats()	8	static
+../src/esp_test.cpp:47:13:void idle_delay()	8	static
+../src/esp_test.cpp:52:6:void task1(void*)	496	static
+../src/esp_test.cpp:107:5:int main()	16	static

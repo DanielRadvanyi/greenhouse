@@ -1,0 +1,12 @@
+../src/PlaintextMQTTExample.c:367:6:vStartSimpleMQTTDemo	16	static
+../src/PlaintextMQTTExample.c:389:13:prvMQTTDemoTask	168	static
+../src/PlaintextMQTTExample.c:492:35:prvConnectToServerWithBackoffRetries	48	static
+../src/PlaintextMQTTExample.c:549:13:prvCreateMQTTConnectionWithBroker	72	static
+../src/PlaintextMQTTExample.c:602:13:prvUpdateSubAckStatus	32	static
+../src/PlaintextMQTTExample.c:622:13:prvMQTTSubscribeWithBackoffRetries	64	static
+../src/PlaintextMQTTExample.c:720:13:prvMQTTPublishToTopic	96	static
+../src/PlaintextMQTTExample.c:757:13:prvMQTTUnsubscribeFromTopic	32	static
+../src/PlaintextMQTTExample.c:787:13:prvMQTTProcessResponse	24	static
+../src/PlaintextMQTTExample.c:839:13:prvMQTTProcessIncomingPublish	32	static
+../src/PlaintextMQTTExample.c:867:13:prvEventCallback	24	static
+../src/PlaintextMQTTExample.c:886:17:prvGetTimeMs	16	static

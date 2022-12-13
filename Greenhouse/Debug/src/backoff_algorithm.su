@@ -1,0 +1,2 @@
+../src/backoff_algorithm.c:38:26:BackoffAlgorithm_GetNextBackoff	32	static
+../src/backoff_algorithm.c:84:6:BackoffAlgorithm_InitializeParams	24	static
