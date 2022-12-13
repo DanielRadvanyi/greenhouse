@@ -31,6 +31,10 @@
 #include "DigitalIoPin.h"
 #include "LiquidCrystal.h"
 
+#include "SimpleMenu.h"
+#include "IntegerEdit.h"
+#include "DecimalEdit.h"
+
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
@@ -67,32 +71,79 @@ void vConfigureTimerForRunTimeStats( void ) {
 }
 
 }
+
 /* end runtime statictics collection */
 static void idle_delay()
 {
 	vTaskDelay(1);
 }
 
+/* Read 2 sensors */
 void taskReadSensor(void *params)
 {
 	(void) params;
 
-	retarget_init();
+	retarget_init();		// important for safe printf, also work with DEBUGOUT
 
 	ModbusMaster node3(241); // Create modbus object that connects to slave id 241 (HMP60)
 	node3.begin(9600); // all nodes must operate at the same speed!
 	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister RH(&node3, 256, true);
 
-	vTaskDelay(1000);
+	vTaskDelay(100);
 
 	ModbusMaster node4(240); // Create modbus object that connects to slave id 240
 	node4.begin(9600); // all nodes must operate at the same speed!
 	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
-	ModbusRegister CO2(&node4, 256, true);
+	ModbusRegister CO2(&node4, 257, true);
+
+	vTaskDelay(100);
 
 	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
 	relay.write(0);
+
+	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
+	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
+	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
+	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
+	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
+	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
+
+	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
+
+	while(true) {
+		float rh, co2;
+		char buffer1[32], buffer2[32];
+
+		rh = RH.read()/10.0;
+		snprintf(buffer1, 32, "RH=%5.1f%%", rh);
+		printf("%s\n",buffer1);
+
+
+		lcd->begin(16, 2);
+		lcd->setCursor(0, 0);
+		// Print a message to the LCD.
+		lcd->print(buffer1);
+
+		vTaskDelay(10);
+
+		co2 = CO2.read();
+		snprintf(buffer2, 32, "CO2=%5.1f%", co2);
+		printf("%s\n",buffer2);
+
+		lcd->setCursor(0, 1);
+		lcd->print(buffer2);
+	}
+
+	vTaskDelay(10);
+}
+
+/* TODO Menu */
+void taskMenuTest(void *params) {
+
+	(void) params;
+
+	retarget_init();
 
 	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
 	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
@@ -105,37 +156,26 @@ void taskReadSensor(void *params)
 	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
 	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
 	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
+
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
 
-	while(true) {
-		float rh, co2;
-		char buffer2[32];
-		char buffer1[32];
+	SimpleMenu menu; // this could also be allocated from the heap
 
-		vTaskDelay(2000);
+	DecimalEdit *co2level = new DecimalEdit(lcd, std::string("CO2 Level"), 0, 200, 20);
 
-		rh = RH.read()/10.0;
-		snprintf(buffer1, 32, "RH=%5.1f%%", rh);
-		printf("%s\n",buffer1);
+	//PropertyEdit* menuItem = nullptr;
 
-		lcd->begin(16, 2);
-		lcd->setCursor(0, 0);
-		// Print a message to the LCD.
-		lcd->print(buffer1);
+	menu.addItem(new MenuItem(co2level));
 
-		vTaskDelay(2000);
+	vTaskDelay(500);
 
-		co2 = CO2.read()/10.0;
-		snprintf(buffer2, 32, "CO2=%5.1f%%", co2);
-		printf("%s\n",buffer2);
+	lcd->begin(16,2);
+	lcd->setCursor(0,0);
+	menu.event(MenuItem::show);
 
-		lcd->setCursor(0, 1);
-		lcd->print(buffer2);
-	}
-
-	vTaskDelay(1);
+	// TODO set up CO2 level value
+	vTaskDelay(10);
 }
-
 
 /**
  * @brief	main routine for FreeRTOS blinky example
@@ -147,10 +187,22 @@ int main(void)
 
 	heap_monitor_setup();
 
-	xTaskCreate(taskReadSensor, "read sensor",
+	/* TODO create queue to recieve signals from rotary coder
+	 * if ...
+	 * Menu 1 -> display sensors values
+	 * Menu 2 -> setting sensors values
+	 */
+	//xQueue = xQueueCreate( 5, sizeof( int32_t ) );
+
+	xTaskCreate(taskReadSensor, "read sensors",
 				configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
 				(TaskHandle_t *) NULL);
 
+	/*
+	xTaskCreate(taskMenuTest, "test menu",
+				configMINIMAL_STACK_SIZE * 4, NULL, (tskIDLE_PRIORITY + 1UL),
+				(TaskHandle_t *) NULL);
+	*/
 
 	/* Start the scheduler */
 	vTaskStartScheduler();

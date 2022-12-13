@@ -4,15 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/DecimalEdit.cpp \
 ../src/DigitalIoPin.cpp \
 ../src/Fmutex.cpp \
 ../src/Greenhouse.cpp \
 ../src/I2C.cpp \
+../src/IntegerEdit.cpp \
 ../src/LiquidCrystal.cpp \
 ../src/LpcUart.cpp \
+../src/MenuItem.cpp \
 ../src/ModbusMaster.cpp \
 ../src/ModbusRegister.cpp \
 ../src/SerialPort.cpp \
+../src/SimpleMenu.cpp \
 ../src/cr_cpp_config.cpp \
 ../src/cr_startup_lpc15xx.cpp \
 ../src/retarget_uart.cpp \
@@ -30,15 +34,19 @@ C_SRCS += \
 ../src/using_plaintext.c 
 
 CPP_DEPS += \
+./src/DecimalEdit.d \
 ./src/DigitalIoPin.d \
 ./src/Fmutex.d \
 ./src/Greenhouse.d \
 ./src/I2C.d \
+./src/IntegerEdit.d \
 ./src/LiquidCrystal.d \
 ./src/LpcUart.d \
+./src/MenuItem.d \
 ./src/ModbusMaster.d \
 ./src/ModbusRegister.d \
 ./src/SerialPort.d \
+./src/SimpleMenu.d \
 ./src/cr_cpp_config.d \
 ./src/cr_startup_lpc15xx.d \
 ./src/retarget_uart.d \
@@ -56,16 +64,20 @@ C_DEPS += \
 ./src/using_plaintext.d 
 
 OBJS += \
+./src/DecimalEdit.o \
 ./src/DigitalIoPin.o \
 ./src/Fmutex.o \
 ./src/Greenhouse.o \
 ./src/I2C.o \
+./src/IntegerEdit.o \
 ./src/LiquidCrystal.o \
 ./src/LpcUart.o \
+./src/MenuItem.o \
 ./src/ModbusMaster.o \
 ./src/ModbusRegister.o \
 ./src/PlaintextMQTTExample.o \
 ./src/SerialPort.o \
+./src/SimpleMenu.o \
 ./src/backoff_algorithm.o \
 ./src/core_mqtt.o \
 ./src/core_mqtt_serializer.o \
@@ -99,7 +111,7 @@ src/%.o: ../src/%.c src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/DigitalIoPin.d ./src/DigitalIoPin.o ./src/Fmutex.d ./src/Fmutex.o ./src/Greenhouse.d ./src/Greenhouse.o ./src/I2C.d ./src/I2C.o ./src/LiquidCrystal.d ./src/LiquidCrystal.o ./src/LpcUart.d ./src/LpcUart.o ./src/ModbusMaster.d ./src/ModbusMaster.o ./src/ModbusRegister.d ./src/ModbusRegister.o ./src/PlaintextMQTTExample.d ./src/PlaintextMQTTExample.o ./src/SerialPort.d ./src/SerialPort.o ./src/backoff_algorithm.d ./src/backoff_algorithm.o ./src/core_mqtt.d ./src/core_mqtt.o ./src/core_mqtt_serializer.d ./src/core_mqtt_serializer.o ./src/cr_cpp_config.d ./src/cr_cpp_config.o ./src/cr_startup_lpc15xx.d ./src/cr_startup_lpc15xx.o ./src/crp.d ./src/crp.o ./src/esp8266_socket.d ./src/esp8266_socket.o ./src/heap_lock_monitor.d ./src/heap_lock_monitor.o ./src/retarget_uart.d ./src/retarget_uart.o ./src/serial_port.d ./src/serial_port.o ./src/sysinit.d ./src/sysinit.o ./src/using_plaintext.d ./src/using_plaintext.o
+	-$(RM) ./src/DecimalEdit.d ./src/DecimalEdit.o ./src/DigitalIoPin.d ./src/DigitalIoPin.o ./src/Fmutex.d ./src/Fmutex.o ./src/Greenhouse.d ./src/Greenhouse.o ./src/I2C.d ./src/I2C.o ./src/IntegerEdit.d ./src/IntegerEdit.o ./src/LiquidCrystal.d ./src/LiquidCrystal.o ./src/LpcUart.d ./src/LpcUart.o ./src/MenuItem.d ./src/MenuItem.o ./src/ModbusMaster.d ./src/ModbusMaster.o ./src/ModbusRegister.d ./src/ModbusRegister.o ./src/PlaintextMQTTExample.d ./src/PlaintextMQTTExample.o ./src/SerialPort.d ./src/SerialPort.o ./src/SimpleMenu.d ./src/SimpleMenu.o ./src/backoff_algorithm.d ./src/backoff_algorithm.o ./src/core_mqtt.d ./src/core_mqtt.o ./src/core_mqtt_serializer.d ./src/core_mqtt_serializer.o ./src/cr_cpp_config.d ./src/cr_cpp_config.o ./src/cr_startup_lpc15xx.d ./src/cr_startup_lpc15xx.o ./src/crp.d ./src/crp.o ./src/esp8266_socket.d ./src/esp8266_socket.o ./src/heap_lock_monitor.d ./src/heap_lock_monitor.o ./src/retarget_uart.d ./src/retarget_uart.o ./src/serial_port.d ./src/serial_port.o ./src/sysinit.d ./src/sysinit.o ./src/using_plaintext.d ./src/using_plaintext.o
 
 .PHONY: clean-src
 

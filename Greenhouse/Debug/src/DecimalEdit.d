@@ -1,5 +1,5 @@
-src/Greenhouse.o src/Greenhouse.d: ../src/Greenhouse.cpp \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_board_nxp_lpcxpresso_1549\inc/board.h \
+src/DecimalEdit.o src/DecimalEdit.d: ../src/DecimalEdit.cpp \
+ ../src/DecimalEdit.h ../src/PropertyEdit.h ../src/LiquidCrystal.h \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/chip.h \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/lpc_types.h \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/sys_config.h \
@@ -47,27 +47,10 @@ src/Greenhouse.o src/Greenhouse.d: ../src/Greenhouse.cpp \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2cm_15xx.h \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2c_common_15xx.h \
  C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2cs_15xx.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_board_nxp_lpcxpresso_1549\inc/board_api.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/lpc_types.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/FreeRTOS.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\inc/FreeRTOSConfig.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/projdefs.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/portable.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/deprecated_definitions.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\portable\GCC\ARM_CM3/portmacro.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/mpu_wrappers.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/task.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/list.h \
- ../src/heap_lock_monitor.h ../src/retarget_uart.h \
- ../src/ModbusRegister.h ../src/ModbusMaster.h ../src/word.h \
- ../src/SerialPort.h ../src/LpcUart.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/semphr.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/queue.h \
- C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/task.h \
- ../src/Fmutex.h ../src/DigitalIoPin.h ../src/LiquidCrystal.h \
- ../src/SimpleMenu.h ../src/MenuItem.h ../src/PropertyEdit.h \
- ../src/IntegerEdit.h ../src/DecimalEdit.h
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_board_nxp_lpcxpresso_1549\inc/board.h:
+ ../src/DigitalIoPin.h
+../src/DecimalEdit.h:
+../src/PropertyEdit.h:
+../src/LiquidCrystal.h:
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/chip.h:
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/lpc_types.h:
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/sys_config.h:
@@ -115,32 +98,4 @@ C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_c
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2cm_15xx.h:
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2c_common_15xx.h:
 C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/i2cs_15xx.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_board_nxp_lpcxpresso_1549\inc/board_api.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/lpc_types.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/FreeRTOS.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\inc/FreeRTOSConfig.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/projdefs.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/portable.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/deprecated_definitions.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\portable\GCC\ARM_CM3/portmacro.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/mpu_wrappers.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/task.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/list.h:
-../src/heap_lock_monitor.h:
-../src/retarget_uart.h:
-../src/ModbusRegister.h:
-../src/ModbusMaster.h:
-../src/word.h:
-../src/SerialPort.h:
-../src/LpcUart.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/semphr.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/queue.h:
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\FreeRTOS\src\include/task.h:
-../src/Fmutex.h:
 ../src/DigitalIoPin.h:
-../src/LiquidCrystal.h:
-../src/SimpleMenu.h:
-../src/MenuItem.h:
-../src/PropertyEdit.h:
-../src/IntegerEdit.h:
-../src/DecimalEdit.h:
