@@ -3,6 +3,6 @@ c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6
 ../src/Greenhouse.cpp:77:6:void vConfigureTimerForRunTimeStats()	8	static
 ../src/Greenhouse.cpp:86:13:void idle_delay()	8	static
 ../src/Greenhouse.cpp:92:6:void taskReadSensor(void*)	664	static
-../src/Greenhouse.cpp:161:6:void taskMenu2(void*)	328	static
-../src/Greenhouse.cpp:353:6:void taskMenu(void*)	256	static
-../src/Greenhouse.cpp:409:5:int main()	16	static
+../src/Greenhouse.cpp:150:6:void taskMenu2(void*)	328	static
+../src/Greenhouse.cpp:357:6:void taskMenu(void*)	256	static
+../src/Greenhouse.cpp:413:5:int main()	16	static

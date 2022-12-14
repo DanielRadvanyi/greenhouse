@@ -41,7 +41,7 @@
 #include "ITM_print.h"
 
 // Mailbox (a queue with a single item)
-QueueHandle_t mailboxHumidity;
+QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
 
 
@@ -88,7 +88,7 @@ static void idle_delay()
 	vTaskDelay(1);
 }
 
-/* Read 2 sensors */
+/* Read sensors */
 void taskReadSensor(void *params)
 {
 	(void) params;
@@ -114,17 +114,6 @@ void taskReadSensor(void *params)
 	node5.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister CO2(&node5, 257, true);
 
-	/*
-	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
-	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
-	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
-	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
-	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
-	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
-
-	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
-	*/
-
 	DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
 	relay.write(0);
 
@@ -137,8 +126,8 @@ void taskReadSensor(void *params)
 
 		// Write rh to the humidity MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
-		if( !xQueueSend(mailboxHumidity, &rh, 0)) {
-			printf("Failed to send Humidity data, queue full.\r\n");
+		if( !xQueueSend(mailboxRh, &rh, 0)) {
+			printf("Failed to send RH data, queue full.\r\n");
 		}
 
 		idle_delay();
@@ -148,7 +137,7 @@ void taskReadSensor(void *params)
 		// Write co2 to the co2 MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxCo2, &co2, 0)) {
-			printf("Failed to send Humidity data, queue full.\r\n");
+			printf("Failed to send RH data, queue full.\r\n");
 		}
 
 		idle_delay();
@@ -170,11 +159,26 @@ void taskMenu2(void *params) {
 
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
 
-	// 3 buttons: up, down, ok
-	// TODO: check that how to initialise these
+	// 3 modes: up, down, ok
+	// TODO: get mode from rotary queue
+	/**this is test with normal button
 	DigitalIoPin b1(0, 17, DigitalIoPin::pullup);
 	DigitalIoPin b2(1, 11, DigitalIoPin::pulldown);
-	DigitalIoPin b3(1, 9, DigitalIoPin::input); // <- how to express OK(select/press)?
+	DigitalIoPin b3(1, 9, DigitalIoPin::input); // <- how to express OK(select/press)?*/
+
+
+	DigitalIoPin b1(1, 8, DigitalIoPin::pullup, true); // sw_A2 go up
+	DigitalIoPin b2(0, 5, DigitalIoPin::pullup, true); // sw_A3 go down
+	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 pressed (clicked)
+	//DigitalIoPin sw4(0, 7, DigitalIoPin::pullup, true);
+
+	// real rotary coder
+	/*
+	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a4(0, 6, DigitalIoPin::pullup, true);
+	DigitalIoPin sw_a5(0, 7, DigitalIoPin::pullup, true);
+	*/
 
 	bool b1Pressed = false;
 	bool b2Pressed = false;
@@ -182,8 +186,8 @@ void taskMenu2(void *params) {
 
     SimpleMenu menu;
 
-    DecimalEdit *editHumidity = new DecimalEdit(lcd, std::string("Humidity"), 0, 1, 0.1);
-    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 0, 1, 0.1);
+    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 5);
+    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
 
     PropertyEdit* menuItem = nullptr;
 
@@ -192,23 +196,23 @@ void taskMenu2(void *params) {
     int sleepCounter = 0;
 
     /* Main Menu has 2 menu items:
-	 * 1. HUMIDITY
+	 * 1. RH
 	 * * HUMIDITY Value will be updated from the mailbox.
 	 * * LCD display will be updated every x seconds
 	 * * If selected -> open edit mode
-	 * 2. Co2
-	 * * HUMIDITY Value will be updated from the mailbox.
+	 * 2. CO2
+	 * * CO2 Value will be updated from the mailbox.
 	 * * LCD display will be updated every x seconds
 	 * * If selected -> open edit mode
 	 */
 
-    menu.addItem(new MenuItem(editHumidity));
+    menu.addItem(new MenuItem(editRh));
     menu.addItem(new MenuItem(editCo2));
 
     // Set up Menu with initial values 0.0
-    p.print("INITIAL MENU");
-    editHumidity->setValue(0.0);
-	p.print("\nHumidity: 0.0");
+    p.print("INITIAL MENU");	// ITM print
+    editRh->setValue(0.0);
+	p.print("\nRH: 0.0");
 	editCo2->setValue(0.0);
 	p.print("\nC02: 0.0");
 
@@ -219,11 +223,11 @@ void taskMenu2(void *params) {
 	while(1) {
 		// Read queue values into these variables
 		// (In the example they use uint_32_t, but we want float values)
-		float humidityData = 0.0;
+		float rhData = 0.0;
 		float co2Data = 0.0;
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
-		bool humidityUpdated = xQueueReceive(mailboxHumidity, &humidityData, 0 );
+		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
 
 		// press a button -> send an event to menu handler
@@ -255,8 +259,8 @@ void taskMenu2(void *params) {
 
 				// Print menu
 				p.print("MENU");
-				p.print("\nHumidity:");
-				p.print(editHumidity->getValue());
+				p.print("\nRH:");
+				p.print(editRh->getValue());
 				p.print("\nCo2:");
 				p.print(editCo2->getValue());
 				p.print("\n");
@@ -290,7 +294,7 @@ void taskMenu2(void *params) {
 				int menuItemId = menu.getPosition();
 				p.print("\nOK ITEM\n");
 				if (menuItemId == 0) {
-					menuItem = editHumidity;
+					menuItem = editRh;
 				} else if (menuItemId == 1) {
 					menuItem = editCo2;
 				} else {
@@ -302,20 +306,20 @@ void taskMenu2(void *params) {
 			// Update current Humidity and Co2 values
 			// -> when we are not in the edit menu
 			// -> when the value has been updated
-			if (humidityUpdated) {
-				editHumidity->setValue(humidityData);
+			if (rhUpdated) {
+				editRh->setValue(rhData);
 			}
 			if (co2Updated) {
 				editCo2->setValue(co2Data);
 			}
 
-			// Update the menu with the latest Humidity and Co2 values
+			// Update the menu with the latest RH and Co2 values
 			// Shown on the LCD every x amount of idle time
 			if (sleepCounter >= 500) {
 				// Print menu
 				p.print("MENU");
-				p.print("\nHumidity:");
-				p.print(editHumidity->getValue());
+				p.print("\nRH:");
+				p.print(editRh->getValue());
 				p.print("\nCo2:");
 				p.print(editCo2->getValue());
 				p.print("\n");
@@ -349,7 +353,6 @@ void taskMenu2(void *params) {
 	}
 }
 
-/* TODO Menu */
 //  Check that taskMenu2 works, then remove
 void taskMenu(void *params) {
 	(void) params;
@@ -413,9 +416,9 @@ int main(void)
 
 	heap_monitor_setup();
 
-	// Initialise Mailbox for humidity and co2
+	// Initialise Mailbox for rh and co2
 	// Queue set to 3
-	mailboxHumidity = xQueueCreate(3, sizeof(float));
+	mailboxRh = xQueueCreate(3, sizeof(float));
 	mailboxCo2 = xQueueCreate(3, sizeof(float));
 
 	// The menu will read the mailbox
