@@ -47,7 +47,6 @@
  ****************************************************************************/
 static DigitalIoPin siga(0, 5, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 6, DigitalIoPin::input, true);
-DigitalIoPin solenoid(0, 27, DigitalIoPin::pullup, true);
 modbusConfig modbus;
 typedef struct TaskData {
 	LpcUart *uart;
@@ -62,6 +61,7 @@ struct SensorData {
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
 QueueHandle_t mailboxSetCo2;
+QueueHandle_t mailboxValve;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
 QueueHandle_t mailboxTemp;
@@ -255,6 +255,27 @@ void vReadSensor(void *pvParameters){
 	}
 }
 
+void vCo2Valve(void *pvParameters) {
+	// CO2 relay valve
+	DigitalIoPin relay(0, 27, DigitalIoPin::output);
+
+	bool valveValue = true;
+	while(1){
+		bool setValveUpdated = xQueueReceive(mailboxValve, &valveValue, 0 );
+
+		if (setValveUpdated) {
+			if (valveValue) {
+				relay.write(true);
+			} else if (!valveValue) {
+				relay.write(false);
+			}
+		}
+		vTaskDelay(10000);
+	}
+}
+
+
+
 void vRotary(void *pvParameters){
 	bool clockwise = false;
 	int timestamp;
@@ -440,6 +461,24 @@ void vMenu(void *pvParameters) {
 			}
 		}
 
+		// set CO2 value <= read CO2 value -> write 0 to queue -> close the valve
+		// set CO2 value > read CO2 value -> write 1 to queue -> open
+		bool value = false;
+		if ( setCo2Data <= co2Data ) {
+			if( !xQueueOverwrite(mailboxValve, &value)){
+				uart_lock.lock();
+				dbgu->write(("Failed to send data, queue full.\r\n"));
+				uart_lock.unlock();
+			}
+		} else {
+			value = true;
+			if( !xQueueOverwrite(mailboxValve, &value)) {
+				uart_lock.lock();
+				dbgu->write(("Failed to send data, queue full.\r\n"));
+				uart_lock.unlock();
+			}
+		}
+
 		// reset counter
 		if (rotary==1 || rotary==2 ||rotary==3) {
 			sleepCounter = 0;
@@ -502,6 +541,7 @@ int main(void){
 	mailboxSetCo2 = xQueueCreate(3, sizeof(int32_t));
 	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
 	menuQueue = xQueueCreate(10, sizeof(int));
+	mailboxValve = xQueueCreate(1, sizeof(int32_t));
 
 	xTaskCreate(vReadSensor, "vReadSensor",
 			((configMINIMAL_STACK_SIZE) * 5), dbgu, (tskIDLE_PRIORITY + 1UL),
