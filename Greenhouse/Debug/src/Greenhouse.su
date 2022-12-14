@@ -19,7 +19,7 @@ c:\nxp\mcuxpressoide_11.5.0_7232\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.5
 ../src/Greenhouse.cpp:202:6:void vReadSensor(void*)	960	static
 ../src/Greenhouse.cpp:258:6:void vCo2Valve(void*)	48	static
 ../src/Greenhouse.cpp:279:6:void vRotary(void*)	64	static
-../src/Greenhouse.cpp:326:6:void vMenu(void*)	296	static
-../src/Greenhouse.cpp:503:5:int main()	136	static
-../src/Greenhouse.cpp:563:1:void __static_initialization_and_destruction_0(int, int)	24	static
-../src/Greenhouse.cpp:563:1:cpp)	8	static
+../src/Greenhouse.cpp:326:6:void vMenu(void*)	280	static
+../src/Greenhouse.cpp:500:5:int main()	136	static
+../src/Greenhouse.cpp:565:1:void __static_initialization_and_destruction_0(int, int)	24	static
+../src/Greenhouse.cpp:565:1:cpp)	8	static

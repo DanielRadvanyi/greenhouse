@@ -26,6 +26,7 @@
 #include <cr_section_macros.h>
 #include "task.h"
 #include <stdint.h>
+#include <stdlib.h>
 #include "heap_lock_monitor.h"
 #include "retarget_uart.h"
 
@@ -60,7 +61,6 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
-QueueHandle_t mailboxSetCo2;
 QueueHandle_t mailboxValve;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
@@ -76,7 +76,7 @@ Fmutex uart_lock;
 #define CHKTAG_SIZE     3
 /* Read/write buffer (32-bit aligned) */
 uint32_t buffer[IAP_NUM_BYTES_TO_READ_WRITE / sizeof(uint32_t)];
-
+float setCo2Data;
 //testing for eeprom
 /*****************************************************************************
  * Private functions
@@ -359,19 +359,20 @@ void vMenu(void *pvParameters) {
 	lcd->setCursor(0,0);
 	menu.event(MenuItem::show);
 
+	float rhData = 0.0;
+	float co2Data = 0.0;
+	float tempData = 0.0;
+
+	editCo2->setValue(setCo2Data);
 	while(1) {
 		// Read queue values into these variables
 		// (In the example they use uint_32_t, but we want float values)
-		float rhData = 0.0;
-		float co2Data = 0.0;
-		float setCo2Data = 0.0;
-		float tempData = 0.0;
 
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
-		bool setCo2Updated = xQueueReceive(mailboxSetCo2, &setCo2Data, 0 );
+		//bool setCo2Updated = xQueueReceive(mailboxSetCo2, &setCo2Data, 0 );
 		bool tempUpdated = xQueueReceive(mailboxTemp, &tempData, 0 );
 
 		/* Receive Rotary signal*/
@@ -403,14 +404,13 @@ void vMenu(void *pvParameters) {
 				menu.event(MenuItem::ok);
 				menu.event(MenuItem::back);
 
-
-				float co2target = editCo2->getValueF();
+				setCo2Data = editCo2->getValueF();
 				char buf[20];
-				snprintf(buf, 20, "CO2 set to: %f", co2target);
+				snprintf(buf, 20, "CO2 set to: %f", setCo2Data);
 				uart_lock.lock();
 				dbgu->write(buf);
 				uart_lock.unlock();
-				writeEEPROM(co2target);
+				writeEEPROM(setCo2Data);
 
 				menuItem = nullptr;
 			}
@@ -453,9 +453,6 @@ void vMenu(void *pvParameters) {
 			if (co2Updated) {
 				readCo2->setValue(co2Data); // not the value edited with the rotary
 			}
-			if (setCo2Updated) {
-				editCo2->setValue(setCo2Data);
-			}
 			if (tempUpdated) {
 				readTemp->setValue(tempData);
 			}
@@ -464,13 +461,13 @@ void vMenu(void *pvParameters) {
 		// set CO2 value <= read CO2 value -> write 0 to queue -> close the valve
 		// set CO2 value > read CO2 value -> write 1 to queue -> open
 		bool value = false;
-		if ( setCo2Data <= co2Data ) {
+		if ( setCo2Data <= co2Data  && co2Data != 0) {
 			if( !xQueueOverwrite(mailboxValve, &value)){
 				uart_lock.lock();
 				dbgu->write(("Failed to send data, queue full.\r\n"));
 				uart_lock.unlock();
 			}
-		} else {
+		} else if (co2Data != 0) {
 			value = true;
 			if( !xQueueOverwrite(mailboxValve, &value)) {
 				uart_lock.lock();
@@ -532,14 +529,15 @@ int main(void){
 	}
 	// Check and display string if it exists
 	ShowString((char *) ptr);
+	//write co2 target from eeprom
+	setCo2Data = atof((char*)&ptr[4]);
 	xTaskResumeAll();
 
 	// Queue creations
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
-	mailboxRh = xQueueCreate(3, sizeof(int32_t));
-	mailboxCo2 = xQueueCreate(3, sizeof(int32_t));
-	mailboxSetCo2 = xQueueCreate(3, sizeof(int32_t));
-	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
+	mailboxRh = xQueueCreate(30, sizeof(int32_t));
+	mailboxCo2 = xQueueCreate(30, sizeof(int32_t));
+	mailboxTemp = xQueueCreate(30, sizeof(int32_t));
 	menuQueue = xQueueCreate(10, sizeof(int));
 	mailboxValve = xQueueCreate(1, sizeof(int32_t));
 
@@ -553,6 +551,10 @@ int main(void){
 
 	xTaskCreate(vMenu, "vMenu",
 			(configMINIMAL_STACK_SIZE) * 4, dbgu, (tskIDLE_PRIORITY + 1UL),
+			(TaskHandle_t *) NULL);/**/
+
+	xTaskCreate(vCo2Valve, "vCo2Valve",
+			(configMINIMAL_STACK_SIZE) + 128, dbgu, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);/**/
 
 	/*Start the scheduler */
