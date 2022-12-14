@@ -1,0 +1,6 @@
+../src/modbus.cpp:5:1:modbusConfig::modbusConfig()	16	static
+../src/modbus.cpp:18:5:int modbusConfig::get_temp()	16	static
+../src/modbus.cpp:24:5:int modbusConfig::get_rh()	16	static
+../src/modbus.cpp:30:5:int modbusConfig::get_co2()	16	static
+../src/modbus.cpp:36:1:modbusConfig::~modbusConfig()	16	static
+../src/modbus.cpp:36:1:virtual modbusConfig::~modbusConfig()	16	static

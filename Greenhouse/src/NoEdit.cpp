@@ -38,12 +38,14 @@ void NoEdit::display() {
 	lcd->print(title);
 	lcd->setCursor(0,1);
 	char s[32];
+	/*
 	if(focus) {
 		snprintf(s, 32, "     [%4f]     ", value);
 	}
 	else {
 		snprintf(s, 32, "      %4f      ", value);
-	}
+	} */
+	snprintf(s, 32, "     %4f     ", value);
 	lcd->print(s);
 }
 

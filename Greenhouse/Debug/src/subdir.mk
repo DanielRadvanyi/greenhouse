@@ -21,6 +21,7 @@ CPP_SRCS += \
 ../src/SimpleMenu.cpp \
 ../src/cr_cpp_config.cpp \
 ../src/cr_startup_lpc15xx.cpp \
+../src/modbus.cpp \
 ../src/retarget_uart.cpp \
 ../src/serial_port.cpp 
 
@@ -54,6 +55,7 @@ CPP_DEPS += \
 ./src/SimpleMenu.d \
 ./src/cr_cpp_config.d \
 ./src/cr_startup_lpc15xx.d \
+./src/modbus.d \
 ./src/retarget_uart.d \
 ./src/serial_port.d 
 
@@ -95,6 +97,7 @@ OBJS += \
 ./src/crp.o \
 ./src/esp8266_socket.o \
 ./src/heap_lock_monitor.o \
+./src/modbus.o \
 ./src/retarget_uart.o \
 ./src/serial_port.o \
 ./src/sysinit.o \
@@ -120,7 +123,7 @@ src/%.o: ../src/%.c src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/DecimalEdit.d ./src/DecimalEdit.o ./src/DigitalIoPin.d ./src/DigitalIoPin.o ./src/Fmutex.d ./src/Fmutex.o ./src/Greenhouse.d ./src/Greenhouse.o ./src/I2C.d ./src/I2C.o ./src/ITM_print.d ./src/ITM_print.o ./src/ITM_write.d ./src/ITM_write.o ./src/IntegerEdit.d ./src/IntegerEdit.o ./src/LiquidCrystal.d ./src/LiquidCrystal.o ./src/LpcUart.d ./src/LpcUart.o ./src/MenuItem.d ./src/MenuItem.o ./src/ModbusMaster.d ./src/ModbusMaster.o ./src/ModbusRegister.d ./src/ModbusRegister.o ./src/NoEdit.d ./src/NoEdit.o ./src/PlaintextMQTTExample.d ./src/PlaintextMQTTExample.o ./src/SerialPort.d ./src/SerialPort.o ./src/SimpleMenu.d ./src/SimpleMenu.o ./src/backoff_algorithm.d ./src/backoff_algorithm.o ./src/core_mqtt.d ./src/core_mqtt.o ./src/core_mqtt_serializer.d ./src/core_mqtt_serializer.o ./src/cr_cpp_config.d ./src/cr_cpp_config.o ./src/cr_startup_lpc15xx.d ./src/cr_startup_lpc15xx.o ./src/crp.d ./src/crp.o ./src/esp8266_socket.d ./src/esp8266_socket.o ./src/heap_lock_monitor.d ./src/heap_lock_monitor.o ./src/retarget_uart.d ./src/retarget_uart.o ./src/serial_port.d ./src/serial_port.o ./src/sysinit.d ./src/sysinit.o ./src/using_plaintext.d ./src/using_plaintext.o
+	-$(RM) ./src/DecimalEdit.d ./src/DecimalEdit.o ./src/DigitalIoPin.d ./src/DigitalIoPin.o ./src/Fmutex.d ./src/Fmutex.o ./src/Greenhouse.d ./src/Greenhouse.o ./src/I2C.d ./src/I2C.o ./src/ITM_print.d ./src/ITM_print.o ./src/ITM_write.d ./src/ITM_write.o ./src/IntegerEdit.d ./src/IntegerEdit.o ./src/LiquidCrystal.d ./src/LiquidCrystal.o ./src/LpcUart.d ./src/LpcUart.o ./src/MenuItem.d ./src/MenuItem.o ./src/ModbusMaster.d ./src/ModbusMaster.o ./src/ModbusRegister.d ./src/ModbusRegister.o ./src/NoEdit.d ./src/NoEdit.o ./src/PlaintextMQTTExample.d ./src/PlaintextMQTTExample.o ./src/SerialPort.d ./src/SerialPort.o ./src/SimpleMenu.d ./src/SimpleMenu.o ./src/backoff_algorithm.d ./src/backoff_algorithm.o ./src/core_mqtt.d ./src/core_mqtt.o ./src/core_mqtt_serializer.d ./src/core_mqtt_serializer.o ./src/cr_cpp_config.d ./src/cr_cpp_config.o ./src/cr_startup_lpc15xx.d ./src/cr_startup_lpc15xx.o ./src/crp.d ./src/crp.o ./src/esp8266_socket.d ./src/esp8266_socket.o ./src/heap_lock_monitor.d ./src/heap_lock_monitor.o ./src/modbus.d ./src/modbus.o ./src/retarget_uart.d ./src/retarget_uart.o ./src/serial_port.d ./src/serial_port.o ./src/sysinit.d ./src/sysinit.o ./src/using_plaintext.d ./src/using_plaintext.o
 
 .PHONY: clean-src
 
