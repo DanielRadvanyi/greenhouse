@@ -15,6 +15,7 @@ CPP_SRCS += \
 ../src/SerialPort.cpp \
 ../src/cr_cpp_config.cpp \
 ../src/cr_startup_lpc15xx.cpp \
+../src/modbus.cpp \
 ../src/retarget_uart.cpp \
 ../src/serial_port.cpp 
 
@@ -48,6 +49,7 @@ OBJS += \
 ./src/crp.o \
 ./src/esp8266_socket.o \
 ./src/heap_lock_monitor.o \
+./src/modbus.o \
 ./src/retarget_uart.o \
 ./src/serial_port.o \
 ./src/sysinit.o \
@@ -65,6 +67,7 @@ CPP_DEPS += \
 ./src/SerialPort.d \
 ./src/cr_cpp_config.d \
 ./src/cr_startup_lpc15xx.d \
+./src/modbus.d \
 ./src/retarget_uart.d \
 ./src/serial_port.d 
 

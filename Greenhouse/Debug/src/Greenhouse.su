@@ -9,14 +9,14 @@ C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\l
 C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/pinint_15xx.h:245:20:void Chip_PININT_ClearIntStatus(LPC_PIN_INT_T*, uint32_t)	16	static
 C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/inmux_15xx.h:221:20:void Chip_INMUX_PinIntSel(uint8_t, uint8_t, uint8_t)	16	static
 c:\nxp\mcuxpressoide_11.5.0_7232\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.5.0.202107051138\tools\arm-none-eabi\include\c++\10.3.1\arm-none-eabi\thumb\v7-m\nofp\bits\gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
-../src/Greenhouse.cpp:57:13:void prvSetupHardware()	8	static
-../src/Greenhouse.cpp:69:6:void PIN_INT0_IRQHandler()	16	static
-../src/Greenhouse.cpp:86:6:void vConfigureTimerForRunTimeStats()	8	static
-../src/Greenhouse.cpp:92:13:void vConfigureInterrupts()	16	static
-../src/Greenhouse.cpp:121:13:void idle_delay()	8	static
-../src/Greenhouse.cpp:126:6:void taskReadSensor(void*)	840	static
-../src/Greenhouse.cpp:192:6:void vRotary(void*)	304	static
-../src/Greenhouse.cpp:240:6:void vRotaryButton(void*)	48	static
-../src/Greenhouse.cpp:254:5:int main()	104	static
-../src/Greenhouse.cpp:297:1:void __static_initialization_and_destruction_0(int, int)	24	static
-../src/Greenhouse.cpp:297:1:cpp)	8	static
+../src/Greenhouse.cpp:63:13:void prvSetupHardware()	8	static
+../src/Greenhouse.cpp:75:6:void PIN_INT0_IRQHandler()	16	static
+../src/Greenhouse.cpp:92:6:void vConfigureTimerForRunTimeStats()	8	static
+../src/Greenhouse.cpp:98:13:void vConfigureInterrupts()	16	static
+../src/Greenhouse.cpp:120:13:void idle_delay()	8	static
+../src/Greenhouse.cpp:125:13:void vSensor(void*)	88	static
+../src/Greenhouse.cpp:141:6:void vRotary(void*)	144	static
+../src/Greenhouse.cpp:182:17:void vDisplay(void*)	104	static
+../src/Greenhouse.cpp:197:5:int main()	16	static
+../src/Greenhouse.cpp:221:1:void __static_initialization_and_destruction_0(int, int)	24	static
+../src/Greenhouse.cpp:221:1:cpp)	8	static
