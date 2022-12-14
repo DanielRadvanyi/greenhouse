@@ -78,6 +78,12 @@ std::string DecimalEdit::getValue() {
 	string s = to_string(value);
 	return s.substr(0, s.find(".") + 2);
 }
+
+float DecimalEdit::getValueF() {
+    float flo = (float)value;
+    return flo;
+}
+
 void DecimalEdit::setValue(float value) {
 	edit = value;
 	save();

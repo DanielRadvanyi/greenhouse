@@ -22,6 +22,7 @@ public:
 	void cancel() override;
 	void setFocus(bool focus) override;
 	bool getFocus() override;
+	float getValueF();
 	void display() override;
 	std::string getValue() override;
 	void setValue(float value);

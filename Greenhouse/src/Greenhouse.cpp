@@ -54,7 +54,7 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
-QueueHandle_t mailboxSetCo2;
+QueueHandle_t mailboxValve;
 QueueHandle_t mailboxTemp;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
@@ -167,10 +167,6 @@ void vReadSensor(void *params)
 	node5.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister CO2(&node5, 257, true);
 
-	// CO2 relay valve
-	DigitalIoPin relay(0, 27, DigitalIoPin::output);
-	relay.write(0);
-
 	while(true)
 	{
 		float rh, co2, temp;
@@ -277,19 +273,26 @@ void vMenu(void *pvParameters) {
 	lcd->setCursor(0,0);
 	menu.event(MenuItem::show);
 
+	// Read queue values into these variables
+	// (In the example they use uint_32_t, but we want float values)
+	float rhData = 0.0;
+	float co2Data = 0.0;
+	float setCo2Data = 0.0;
+	float tempData = 0.0;
+
+
 	while(1) {
-		// Read queue values into these variables
-		// (In the example they use uint_32_t, but we want float values)
+		/*
 		float rhData = 0.0;
 		float co2Data = 0.0;
 		float setCo2Data = 0.0;
 		float tempData = 0.0;
+		*/
 
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
-		bool setCo2Updated = xQueueReceive(mailboxSetCo2, &setCo2Data, 0 );
 		bool tempUpdated = xQueueReceive(mailboxTemp, &tempData, 0 );
 
 		/* Receive Rotary signal*/
@@ -319,10 +322,11 @@ void vMenu(void *pvParameters) {
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
 				menu.event(MenuItem::ok);
-
 				menu.event(MenuItem::back);
+				setCo2Data = menuItem->getValueF();
 				menuItem = nullptr;
 			}
+
 		} else {
 			// No menu item selected
 			// We are in the top level menu
@@ -352,22 +356,19 @@ void vMenu(void *pvParameters) {
 					menuItem = nullptr;
 				}
 			}
+		}
 
-			// Update current values
-			// -> when we are not in the edit menu (only simulator values)
-			// -> when the value has been updated
-			if (rhUpdated) {
-				readRh->setValue(rhData);
-			}
-			if (co2Updated) {
-				readCo2->setValue(co2Data); // not the value edited with the rotary
-			}
-			if (setCo2Updated) {
-				editCo2->setValue(setCo2Data);
-			}
-			if (tempUpdated) {
-				readTemp->setValue(tempData);
-			}
+		// Update current values
+		// -> when we are not in the edit menu (only simulator values)
+		// -> when the value has been updated
+		if (rhUpdated) {
+			readRh->setValue(rhData);
+		}
+		if (co2Updated) {
+			readCo2->setValue(co2Data); // not the value edited with the rotary
+		}
+		if (tempUpdated) {
+			readTemp->setValue(tempData);
 		}
 
 		// reset counter
@@ -387,13 +388,50 @@ void vMenu(void *pvParameters) {
 			menuItem = nullptr;
 		}
 
+		// set CO2 value <= read CO2 value -> write 0 to queue -> close the valve
+		// set CO2 value > read CO2 value -> write 1 to queue -> open
+		bool value = false;
+		if ( setCo2Data <= co2Data ) {
+			if( !xQueueSend(mailboxValve, &value, 0)) {
+				printf("Failed to send data, queue full.\r\n");
+			}
+		} else {
+			value = true;
+			if( !xQueueSend(mailboxValve, &value, 0)) {
+				printf("Failed to send data, queue full.\r\n");
+			}
+		}
+
 		vTaskDelay(10);
 		sleepCounter +=10;
 	}
 }
 
 
-int main(void){
+void vCo2Valve(void *pvParameters) {
+	// CO2 relay valve
+	DigitalIoPin relay(0, 27, DigitalIoPin::output);
+
+	bool valveValue = true;
+
+	while(1) {
+
+		bool setValveUpdated = xQueueReceive(mailboxValve, &valveValue, 0 );
+
+		if (setValveUpdated) {
+			if (valveValue) {
+				relay.write(true);
+			} else if (!valveValue) {
+				relay.write(false);
+			}
+		}
+		vTaskDelay(30000);
+	}
+
+}
+
+
+int main(void) {
 	prvSetupHardware();
 	heap_monitor_setup();
 	vConfigureInterrupts();
@@ -401,7 +439,7 @@ int main(void){
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
 	mailboxRh = xQueueCreate(3, sizeof(int32_t));
 	mailboxCo2 = xQueueCreate(3, sizeof(int32_t));
-	mailboxSetCo2 = xQueueCreate(3, sizeof(int32_t));
+	mailboxValve = xQueueCreate(3, sizeof(int32_t));
 	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
 	menuQueue = xQueueCreate(10, sizeof(int));
 
@@ -424,11 +462,15 @@ int main(void){
 
 	xTaskCreate(vRotary, "vRotary",
 			(configMINIMAL_STACK_SIZE) + 128, dbgu, (tskIDLE_PRIORITY + 1UL),
-			(TaskHandle_t *) NULL);/**/
+			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vMenu, "vMenu",
 			(configMINIMAL_STACK_SIZE) * 4, dbgu, (tskIDLE_PRIORITY + 1UL),
-			(TaskHandle_t *) NULL);/**/
+			(TaskHandle_t *) NULL);
+
+	xTaskCreate(vCo2Valve, "vCo2Valve",
+				(configMINIMAL_STACK_SIZE) * 4, dbgu, (tskIDLE_PRIORITY + 1UL),
+				(TaskHandle_t *) NULL);
 
 	/*Start the scheduler */
 	vTaskStartScheduler();

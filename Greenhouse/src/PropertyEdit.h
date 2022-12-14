@@ -23,6 +23,7 @@ public:
 	virtual bool getFocus() = 0;
 	virtual void display() = 0;
 	virtual string getValue() = 0;
+	virtual float getValueF() = 0;
 	virtual string getTitle() = 0;
 };
 
