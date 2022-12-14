@@ -234,28 +234,28 @@ void vMenu(void *pvParameters) {
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
 
 		/* Receive Rotary signal*/
-		int rotary;
+		int rotary=0;
 		bool input = xQueueReceive(menuQueue, &rotary, 0 );
 
 		// press a button -> send an event to menu handler
 		if (menuItem != nullptr) {
 			// We have a menuItem selected
 			// We are in edit property mode
-			if (b1.read()) {
+			if (rotary==1) {
 				b1Pressed = true;
 			} else if (b1Pressed == true) {
 				b1Pressed = false;
 				menu.event(MenuItem::up);
 			}
 
-			if (b2.read()) {
+			if (rotary==2) {
 				b2Pressed = true;
 			} else if (b2Pressed == true) {
 				b2Pressed = false;
 				menu.event(MenuItem::down);
 			}
 
-			if (b3.read()) {
+			if (rotary==3) {
 				b3Pressed = true;
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
@@ -263,26 +263,25 @@ void vMenu(void *pvParameters) {
 
 				menu.event(MenuItem::back);
 				menuItem = nullptr;
-
 			}
 		} else {
 			// No menu item selected
 			// We are in the top level menu
-			if (b1.read()) {
+			if (rotary==1) {
 				b1Pressed = true;
 			} else if (b1Pressed == true) {
 				b1Pressed = false;
 				menu.event(MenuItem::down);
 			}
 
-			if (b2.read()) {
+			if (rotary==2) {
 				b2Pressed = true;
 			} else if (b2Pressed == true) {
 				b2Pressed = false;
 				menu.event(MenuItem::up);
 			}
 
-			if (b3.read()) {
+			if (rotary==3) {
 				b3Pressed = true;
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
@@ -309,7 +308,7 @@ void vMenu(void *pvParameters) {
 		}
 
 		// reset counter
-		if (b1.read() || b2.read() || b3.read()) {
+		if (rotary==1 || rotary==2 ||rotary==3) {
 			sleepCounter = 0;
 		}
 
