@@ -78,7 +78,7 @@ std::string DecimalEdit::getValue() {
 	string s = to_string(value);
 	return s.substr(0, s.find(".") + 2);
 }
-void DecimalEdit::setValue(float value) {
+void DecimalEdit::setValue(int value) {
 	edit = value;
 	save();
 }

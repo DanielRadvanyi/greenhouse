@@ -1,21 +1,15 @@
 /*
- * DecimalEdit.h
- *
- *  Created on: 12 Oct 2022
- *      Author: aivua
+ * NoEdit.h
  */
-
-#ifndef DECIMALEDIT_H_
-#define DECIMALEDIT_H_
 
 #include "PropertyEdit.h"
 #include "LiquidCrystal.h"
 #include <string>
 
-class DecimalEdit: public PropertyEdit{
+class NoEdit: public PropertyEdit{
 public:
-	DecimalEdit(LiquidCrystal *lcd_, std::string editTitle, int min, int max, double step);
-	virtual ~DecimalEdit();
+	NoEdit(LiquidCrystal *lcd_, std::string editTitle);
+	virtual ~NoEdit();
 	void increment() override;
 	void decrement() override;
 	void accept() override;
@@ -33,11 +27,5 @@ private:
 	LiquidCrystal *lcd;
 	std::string title;
 	double value;
-	double edit;
 	bool focus;
-	int min;
-	int max;
-	double step;
 };
-
-#endif /* DECIMALEDIT_H_ */

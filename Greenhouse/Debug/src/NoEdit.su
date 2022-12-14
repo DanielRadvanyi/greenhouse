@@ -3,21 +3,21 @@ c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6
 ../src/PropertyEdit.h:16:2:PropertyEdit::PropertyEdit()	16	static
 ../src/PropertyEdit.h:17:10:PropertyEdit::~PropertyEdit()	16	static
 ../src/PropertyEdit.h:17:10:virtual PropertyEdit::~PropertyEdit()	16	static
-../src/DecimalEdit.cpp:12:1:DecimalEdit::DecimalEdit(LiquidCrystal*, std::string, int, int, double)	24	static
-../src/DecimalEdit.cpp:21:6:virtual void DecimalEdit::increment()	24	static
-../src/DecimalEdit.cpp:29:6:virtual void DecimalEdit::decrement()	24	static
-../src/DecimalEdit.cpp:37:6:virtual void DecimalEdit::accept()	16	static
-../src/DecimalEdit.cpp:41:6:virtual void DecimalEdit::cancel()	16	static
-../src/DecimalEdit.cpp:46:6:virtual void DecimalEdit::setFocus(bool)	16	static
-../src/DecimalEdit.cpp:50:6:virtual bool DecimalEdit::getFocus()	16	static
-../src/DecimalEdit.cpp:54:6:virtual void DecimalEdit::display()	48	static
-../src/DecimalEdit.cpp:70:6:void DecimalEdit::save()	16	static
-../src/DecimalEdit.cpp:77:13:virtual std::string DecimalEdit::getValue()	40	static
-../src/DecimalEdit.cpp:81:6:void DecimalEdit::setValue(float)	16	static
-../src/DecimalEdit.cpp:86:8:double DecimalEdit::getDoubleValue()	16	static
-../src/DecimalEdit.cpp:90:13:virtual std::string DecimalEdit::getTitle()	16	static
-../src/DecimalEdit.cpp:94:1:DecimalEdit::~DecimalEdit()	16	static
-../src/DecimalEdit.cpp:94:1:virtual DecimalEdit::~DecimalEdit()	16	static
+../src/NoEdit.cpp:9:1:NoEdit::NoEdit(LiquidCrystal*, std::string)	24	static
+../src/NoEdit.cpp:14:6:virtual void NoEdit::increment()	16	static
+../src/NoEdit.cpp:17:6:virtual void NoEdit::decrement()	16	static
+../src/NoEdit.cpp:20:6:virtual void NoEdit::accept()	16	static
+../src/NoEdit.cpp:23:6:virtual void NoEdit::cancel()	16	static
+../src/NoEdit.cpp:27:6:virtual void NoEdit::setFocus(bool)	16	static
+../src/NoEdit.cpp:31:6:virtual bool NoEdit::getFocus()	16	static
+../src/NoEdit.cpp:35:6:virtual void NoEdit::display()	56	static
+../src/NoEdit.cpp:51:6:void NoEdit::save()	16	static
+../src/NoEdit.cpp:55:13:virtual std::string NoEdit::getValue()	40	static
+../src/NoEdit.cpp:59:6:void NoEdit::setValue(float)	16	static
+../src/NoEdit.cpp:63:8:double NoEdit::getDoubleValue()	16	static
+../src/NoEdit.cpp:67:13:virtual std::string NoEdit::getTitle()	16	static
+../src/NoEdit.cpp:71:1:NoEdit::~NoEdit()	16	static
+../src/NoEdit.cpp:71:1:virtual NoEdit::~NoEdit()	16	static
 c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\ext\string_conversions.h:99:5:) [with _String = std::__cxx11::basic_string<char>; _CharT = char]	44	dynamic
 c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:638:9:std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::basic_string(_InputIterator, _InputIterator, const _Alloc&) [with _InputIterator = char*; <template-parameter-2-2> = void; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	32	static
 c:\nxp\mcuxpressoide_11.6.0_8187\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.6.0.202112161359\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:271:9:void std::__cxx11::basic_string<_CharT, _Traits, _Alloc>::_M_construct(_InIterator, _InIterator) [with _InIterator = char*; _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	24	static
