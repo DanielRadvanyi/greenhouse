@@ -34,8 +34,7 @@
 #include "SimpleMenu.h"
 #include "DecimalEdit.h"
 
-// Not used.
-//#include "NoEdit.h"
+#include "NoEdit.h"
 
 // Added ITM print to print menu
 #include "ITM_print.h"
@@ -124,7 +123,7 @@ void taskReadSensor(void *params)
 
 		rh = RH.read()/10.0;
 
-		// Write rh to the humidity MAILBOX.
+		// Write rh to the rh MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxRh, &rh, 0)) {
 			printf("Failed to send RH data, queue full.\r\n");
@@ -132,12 +131,12 @@ void taskReadSensor(void *params)
 
 		idle_delay();
 
-		co2 = CO2.read();
+		co2 = CO2.read()*10.0;
 
 		// Write co2 to the co2 MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxCo2, &co2, 0)) {
-			printf("Failed to send RH data, queue full.\r\n");
+			printf("Failed to send CO2 data, queue full.\r\n");
 		}
 
 		idle_delay();
@@ -169,8 +168,7 @@ void taskMenu2(void *params) {
 
 	DigitalIoPin b1(1, 8, DigitalIoPin::pullup, true); // sw_A2 go up
 	DigitalIoPin b2(0, 5, DigitalIoPin::pullup, true); // sw_A3 go down
-	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 pressed (clicked)
-	//DigitalIoPin sw4(0, 7, DigitalIoPin::pullup, true);
+	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 click (choose) to edit mode
 
 	// real rotary coder
 	/*
@@ -186,7 +184,7 @@ void taskMenu2(void *params) {
 
     SimpleMenu menu;
 
-    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 5);
+    NoEdit *readRh = new NoEdit(lcd, std::string("RH"));
     DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
 
     PropertyEdit* menuItem = nullptr;
@@ -206,15 +204,15 @@ void taskMenu2(void *params) {
 	 * * If selected -> open edit mode
 	 */
 
-    menu.addItem(new MenuItem(editRh));
+    menu.addItem(new MenuItem(readRh));
     menu.addItem(new MenuItem(editCo2));
 
+    /*
     // Set up Menu with initial values 0.0
     p.print("INITIAL MENU");	// ITM print
-    editRh->setValue(0.0);
-	p.print("\nRH: 0.0");
-	editCo2->setValue(0.0);
-	p.print("\nC02: 0.0");
+    readRh->setValue(0.0);
+    editCo2->setValue(0.0);
+    */
 
 	lcd->begin(16,2);
 	lcd->setCursor(0,0);
@@ -260,7 +258,7 @@ void taskMenu2(void *params) {
 				// Print menu
 				p.print("MENU");
 				p.print("\nRH:");
-				p.print(editRh->getValue());
+				p.print(readRh->getValue());
 				p.print("\nCo2:");
 				p.print(editCo2->getValue());
 				p.print("\n");
@@ -293,9 +291,16 @@ void taskMenu2(void *params) {
 				menu.event(MenuItem::ok);
 				int menuItemId = menu.getPosition();
 				p.print("\nOK ITEM\n");
+				/*
 				if (menuItemId == 0) {
-					menuItem = editRh;
+					menuItem = readRh;
 				} else if (menuItemId == 1) {
+					menuItem = editCo2;
+				} else {
+					p.print("\nMenu ITEM Selection failed\n");
+					menuItem = nullptr;
+				}*/
+				if (menuItemId == 1) {
 					menuItem = editCo2;
 				} else {
 					p.print("\nMenu ITEM Selection failed\n");
@@ -303,11 +308,11 @@ void taskMenu2(void *params) {
 				}
 			}
 
-			// Update current Humidity and Co2 values
+			// Update current RH and Co2 values
 			// -> when we are not in the edit menu
 			// -> when the value has been updated
 			if (rhUpdated) {
-				editRh->setValue(rhData);
+				readRh->setValue(rhData);
 			}
 			if (co2Updated) {
 				editCo2->setValue(co2Data);
@@ -315,11 +320,11 @@ void taskMenu2(void *params) {
 
 			// Update the menu with the latest RH and Co2 values
 			// Shown on the LCD every x amount of idle time
-			if (sleepCounter >= 500) {
-				// Print menu
+			if (sleepCounter >= 10) {
+				// ITM Print menu
 				p.print("MENU");
 				p.print("\nRH:");
-				p.print(editRh->getValue());
+				p.print(readRh->getValue());
 				p.print("\nCo2:");
 				p.print(editCo2->getValue());
 				p.print("\n");
@@ -353,59 +358,6 @@ void taskMenu2(void *params) {
 	}
 }
 
-//  Check that taskMenu2 works, then remove
-void taskMenu(void *params) {
-	(void) params;
-
-	DigitalIoPin sw_a2(1, 8, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a3(0, 5, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a4(0, 6, DigitalIoPin::pullup, true);
-	DigitalIoPin sw_a5(0, 7, DigitalIoPin::pullup, true);
-
-	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
-	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
-	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
-	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
-	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
-	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
-
-	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
-
-	/* Main Menu has 2 menu items:
-	 * 1. Monitor: rh, CO2, (maybe exit to go back to main menu OR timeout)
-	 * * In Monitor menu -> display sensors values rh & CO2 (read sensor task)
-	 * 2. Setting: rh, CO2, (maybe exit to go back to main menu OR timeout)
-	 * * In Setting menu -> set values for 2 items: rh & CO2
-	 */
-
-	SimpleMenu mainMenu;
-
-	SimpleMenu monitorMenu;
-	SimpleMenu settingMenu;
-
-	// TODO add monitor and setting to main menu
-
-	//mainMenu.addItem(new MenuItem(monitorMenu));
-	//mainMenu.addItem(new MenuItem(settingMenu));
-
-	DecimalEdit *rhValue = new DecimalEdit(lcd, std::string("RH"), 0, 100, 10);
-	DecimalEdit *co2Value = new DecimalEdit(lcd, std::string("CO2"), 10000, 200, 0.1);
-
-	monitorMenu.addItem(new MenuItem(rhValue));
-	monitorMenu.addItem(new MenuItem(co2Value));
-
-	//PropertyEdit *menuItem = nullptr;
-
-	idle_delay();
-
-	lcd->begin(16,2);
-	lcd->setCursor(0,0);
-	mainMenu.event(MenuItem::show);
-
-	idle_delay();
-}
-
-
 /**
  * @brief	main routine for FreeRTOS blinky example
  * @return	Nothing, function should not exit
@@ -418,8 +370,8 @@ int main(void)
 
 	// Initialise Mailbox for rh and co2
 	// Queue set to 3
-	mailboxRh = xQueueCreate(3, sizeof(float));
-	mailboxCo2 = xQueueCreate(3, sizeof(float));
+	mailboxRh = xQueueCreate(5, sizeof(int32_t));
+	mailboxCo2 = xQueueCreate(5, sizeof(int32_t));
 
 	// The menu will read the mailbox
 	xTaskCreate(taskMenu2, "Menu",
