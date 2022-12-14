@@ -196,10 +196,6 @@ void vMenu(void *pvParameters) {
 	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
 
-	DigitalIoPin b1(1, 8, DigitalIoPin::pullup, true); // sw_A2 go up
-	DigitalIoPin b2(0, 5, DigitalIoPin::pullup, true); // sw_A3 go down
-	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 pressed (clicked)
-
 	bool b1Pressed = false;
 	bool b2Pressed = false;
 	bool b3Pressed = false;
