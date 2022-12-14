@@ -37,6 +37,7 @@
 #include <mutex>
 #include "Fmutex.h"
 #include "modbus.h"
+#include "string.h"
 #include "SimpleMenu.h"
 #include "ITM_print.h"
 #include "DecimalEdit.h"
@@ -46,6 +47,7 @@
  ****************************************************************************/
 static DigitalIoPin siga(0, 5, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 6, DigitalIoPin::input, true);
+DigitalIoPin solenoid(0, 27, DigitalIoPin::pullup, true);
 modbusConfig modbus;
 typedef struct TaskData {
 	LpcUart *uart;
@@ -59,9 +61,23 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
+QueueHandle_t mailboxSetCo2;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
+QueueHandle_t mailboxTemp;
 
+/* EEPROM Address used for storage */
+#define EEPROM_ADDRESS      0x00000100
+/* EEPROM Write count */
+#define IAP_NUM_BYTES_TO_READ_WRITE 32
+/* Tag for checking if a string already exists in EEPROM */
+#define CHKTAG          "NxP"
+#define CHKTAG_SIZE     3
+/* Read/write buffer (32-bit aligned) */
+uint32_t buffer[IAP_NUM_BYTES_TO_READ_WRITE / sizeof(uint32_t)];
+
+//testing for eeprom
+#define TESTSTRING "STRING"
 /*****************************************************************************
  * Private functions
  ****************************************************************************/
@@ -75,6 +91,66 @@ static void prvSetupHardware(void)
 	/* Initial LED0 state is off */
 	Board_LED_Set(0, false);
 }
+
+// read from EEPROM
+static void ShowString(char *str) {
+	int stSize;
+
+	/* Is data tagged with check pattern? */
+	if (strncmp(str, CHKTAG, CHKTAG_SIZE) == 0) {
+		/* Get next byte, which is the string size in bytes */
+		stSize = (uint32_t) str[3];
+		if (stSize > 32) {
+			stSize = 32;
+		}
+
+		/* Add terminator */
+		str[4 + stSize] = '\0';
+
+		/* Show string stored in EEPROM */
+		DEBUGSTR("Stored string found in EEEPROM\r\n");
+		DEBUGSTR("-->");
+		DEBUGSTR((char *) &str[4]);
+		DEBUGSTR("<--\r\n");
+	}
+	else {
+		DEBUGSTR("No string stored in the EEPROM\r\n");
+	}
+}
+
+// Write to EEPROM
+void writeEEPROM(){
+	vTaskSuspendAll(); //Suspend tasks
+
+	// variables
+	uint8_t *ptr = (uint8_t *) buffer;
+	uint8_t ret_code;
+	int index;
+
+	// Setup header
+	strncpy((char *) ptr, CHKTAG, CHKTAG_SIZE);
+
+	// Setup given string
+	strcpy((char *) &ptr[4], TESTSTRING);
+	index = strlen(TESTSTRING);
+	ptr[3] = (uint8_t) index;
+
+	// Write to EEPROM
+	ret_code = Chip_EEPROM_Write(EEPROM_ADDRESS, ptr, IAP_NUM_BYTES_TO_READ_WRITE);
+
+	// Check success
+	if (ret_code == IAP_CMD_SUCCESS) {
+		DEBUGOUT("EEPROM write passed\r\n");
+	}else {
+		char buf[40];
+		snprintf(buf, 40, "EEPROM write failed, return code is: %x\r\n", ret_code);
+		DEBUGOUT(buf);
+	}
+
+	xTaskResumeAll(); //Resume tasks
+}
+
+
 /*****************************************************************************
  * Interrupts
  ****************************************************************************/
@@ -124,23 +200,58 @@ static void vConfigureInterrupts(void){
 }
 
 /* end runtime statictics collection */
-static void idle_delay()
-{
+static void idle_delay(){
 	vTaskDelay(1);
 }
 
-static void vSensor(void *pvParameters){
+/* Read sensors */
+void vReadSensor(void *pvParameters){
+	LpcUart*dbgu = static_cast<LpcUart *>(pvParameters);
 
-	SensorData sensor_event;
+	retarget_init();		// important for safe printf, also work with DEBUGOUT
 
-	while(1)  {
-		sensor_event.temp = modbus.get_temp();
-		sensor_event.rh = modbus.get_rh();
-		sensor_event.co2 = modbus.get_co2();
-		sensor_event.time_stamp= xTaskGetTickCount();
+	ModbusMaster node3(241); // Create modbus object that connects to slave id 241 (HMP60)
+	node3.begin(9600); // all nodes must operate at the same speed!
+	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister RH(&node3, 256, true);
 
-		vTaskDelay(500);
 
+	ModbusMaster node4(241);
+	node4.begin(9600); // all nodes must operate at the same speed!
+	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister TEMP(&node4, 257, true);
+
+
+	ModbusMaster node5(240); // Create modbus object that connects to slave id 240
+	node5.begin(9600); // all nodes must operate at the same speed!
+	node5.idle(idle_delay); // idle function is called while waiting for reply from slave
+	ModbusRegister CO2(&node5, 257, true);
+
+	while(true){
+		float rh, co2, temp;
+		//char buffer1[32], buffer3[32];
+
+		rh = RH.read()/10.0;
+
+		// Write rh to the rh MAILBOX.
+		// Third parameter 0 means don't wait for the queue to have space.
+		if( !xQueueSend(mailboxRh, &rh, 0)) {
+			dbgu->write("Failed to send RH data, queue full.\r\n");
+		}
+
+		co2 = CO2.read()*10.0;
+
+		// Write co2 to the co2 MAILBOX.
+		// Third parameter 0 means don't wait for the queue to have space.
+		if( !xQueueSend(mailboxCo2, &co2, 0)) {
+			dbgu->write("Failed to send CO2 data, queue full.\r\n");
+		}
+
+		temp = TEMP.read()/10.0;
+		if( !xQueueSend(mailboxTemp, &temp, 0)) {
+			dbgu->write("Failed to send TEMP data, queue full.\r\n");
+		}
+		vTaskDelay(10);
 	}
 }
 
@@ -202,18 +313,20 @@ void vMenu(void *pvParameters) {
 
     SimpleMenu menu;
 
-    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 1);
-    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
+    //NoEdit *readRh = new NoEdit(lcd, std::string("RH"));
+    DecimalEdit *readRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 1);
+    DecimalEdit *readCo2 = new DecimalEdit(lcd, std::string("C02"), 0, 10000, 1);
+    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("SET C02"), 200, 10000, 50);
+    DecimalEdit *readTemp = new DecimalEdit(lcd, std::string("TEMP"), 0, 60, 1);
 
     PropertyEdit* menuItem = nullptr;
 
     int sleepCounter = 0;
 
-    menu.addItem(new MenuItem(editRh));
+    menu.addItem(new MenuItem(readRh));
+    menu.addItem(new MenuItem(readCo2));
     menu.addItem(new MenuItem(editCo2));
-
-    editRh->setValue(0.0);
-	editCo2->setValue(0.0);
+    menu.addItem(new MenuItem(readTemp));
 
 	lcd->begin(16,2);
 	lcd->setCursor(0,0);
@@ -224,10 +337,15 @@ void vMenu(void *pvParameters) {
 		// (In the example they use uint_32_t, but we want float values)
 		float rhData = 0.0;
 		float co2Data = 0.0;
+		float setCo2Data = 0.0;
+		float tempData = 0.0;
+
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
+		bool setCo2Updated = xQueueReceive(mailboxSetCo2, &setCo2Data, 0 );
+		bool tempUpdated = xQueueReceive(mailboxTemp, &tempData, 0 );
 
 		/* Receive Rotary signal*/
 		int rotary=0;
@@ -281,25 +399,29 @@ void vMenu(void *pvParameters) {
 				b3Pressed = true;
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
-				menu.event(MenuItem::ok);
 				int menuItemId = menu.getPosition();
-				if (menuItemId == 0) {
-					menuItem = editRh;
-				} else if (menuItemId == 1) {
+				if (menuItemId == 2) {
+					menu.event(MenuItem::ok);
 					menuItem = editCo2;
 				} else {
 					menuItem = nullptr;
 				}
 			}
 
-			// Update current Humidity and Co2 values
-			// -> when we are not in the edit menu
+			// Update current values
+			// -> when we are not in the edit menu (only simulator values)
 			// -> when the value has been updated
 			if (rhUpdated) {
-				editRh->setValue(rhData);
+				readRh->setValue(rhData);
 			}
 			if (co2Updated) {
-				editCo2->setValue(co2Data);
+				readCo2->setValue(co2Data); // not the value edited with the rotary
+			}
+			if (setCo2Updated) {
+				editCo2->setValue(setCo2Data);
+			}
+			if (tempUpdated) {
+				readTemp->setValue(tempData);
 			}
 		}
 
@@ -309,7 +431,7 @@ void vMenu(void *pvParameters) {
 		}
 
 		// no button is pressed for an amount of time -> call back event
-		if (sleepCounter >= 10000) {
+		if (sleepCounter >= 2000) {
 			b1Pressed = false;
 			b2Pressed = false;
 			b3Pressed = false;
@@ -320,21 +442,18 @@ void vMenu(void *pvParameters) {
 			menuItem = nullptr;
 		}
 
-		vTaskDelay(1);
-		sleepCounter +=1;
+		vTaskDelay(10);
+		sleepCounter +=10;
 	}
 }
-
-
 int main(void){
 	prvSetupHardware();
 	heap_monitor_setup();
 	vConfigureInterrupts();
 
-	rotaryQueue = xQueueCreate(50, sizeof(bool));
-	mailboxRh = xQueueCreate(3, sizeof(float));
-	mailboxCo2 = xQueueCreate(3, sizeof(float));
-	menuQueue = xQueueCreate(10, sizeof(int));
+	//EEPROM setup
+	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_EEPROM);
+	Chip_SYSCTL_PeriphReset(RESET_EEPROM);
 
 	/* UART port config */
 	LpcPinMap none = {-1, -1}; // unused pin has negative values in it
@@ -344,9 +463,34 @@ int main(void){
 
 	LpcUart *dbgu = new LpcUart(cfg);
 
+	vTaskSuspendAll();
+	uint8_t *ptr = (uint8_t *) buffer;
+	uint8_t ret_code;
 
-	xTaskCreate(vSensor, "vSensor",
-			((configMINIMAL_STACK_SIZE) + 128), NULL, (tskIDLE_PRIORITY + 1UL),
+	// Data to be read from EEPROM
+	ret_code = Chip_EEPROM_Read(EEPROM_ADDRESS, ptr, IAP_NUM_BYTES_TO_READ_WRITE);
+	if (ret_code != IAP_CMD_SUCCESS) {
+		char buf[25];
+		snprintf(buf, 25, "Command failed to execute, return code is: %x\r\n", ret_code);
+		dbgu->write(buf);
+	}
+	// Check and display string if it exists
+	ShowString((char *) ptr);
+	xTaskResumeAll();
+
+
+	writeEEPROM();
+
+	// Queue creations
+	rotaryQueue = xQueueCreate(50, sizeof(bool));
+	mailboxRh = xQueueCreate(3, sizeof(int32_t));
+	mailboxCo2 = xQueueCreate(3, sizeof(int32_t));
+	mailboxSetCo2 = xQueueCreate(3, sizeof(int32_t));
+	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
+	menuQueue = xQueueCreate(10, sizeof(int));
+
+	xTaskCreate(vReadSensor, "vReadSensor",
+			((configMINIMAL_STACK_SIZE) * 5), dbgu, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotary, "vRotary",
