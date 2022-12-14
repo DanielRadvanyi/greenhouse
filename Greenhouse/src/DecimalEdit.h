@@ -24,6 +24,7 @@ public:
 	bool getFocus() override;
 	void display() override;
 	std::string getValue() override;
+	float getValueF();
 	void setValue(float value);
 	std::string getTitle() override;
 	double getDoubleValue();

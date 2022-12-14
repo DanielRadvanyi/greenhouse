@@ -11,14 +11,14 @@ C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\l
 c:\nxp\mcuxpressoide_11.5.0_7232\ide\plugins\com.nxp.mcuxpresso.tools.win32_11.5.0.202107051138\tools\arm-none-eabi\include\c++\10.3.1\arm-none-eabi\thumb\v7-m\nofp\bits\gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
 ../src/Greenhouse.cpp:86:13:void prvSetupHardware()	8	static
 ../src/Greenhouse.cpp:96:13:void ShowString(char*)	24	static
-../src/Greenhouse.cpp:122:6:void writeEEPROM()	64	static
-../src/Greenhouse.cpp:158:6:void PIN_INT0_IRQHandler()	16	static
-../src/Greenhouse.cpp:175:6:void vConfigureTimerForRunTimeStats()	8	static
-../src/Greenhouse.cpp:181:13:void vConfigureInterrupts()	16	static
-../src/Greenhouse.cpp:203:13:void idle_delay()	8	static
-../src/Greenhouse.cpp:208:6:void vReadSensor(void*)	960	static
-../src/Greenhouse.cpp:258:6:void vRotary(void*)	64	static
-../src/Greenhouse.cpp:299:6:void vMenu(void*)	264	static
-../src/Greenhouse.cpp:449:5:int main()	136	static
-../src/Greenhouse.cpp:509:1:void __static_initialization_and_destruction_0(int, int)	24	static
-../src/Greenhouse.cpp:509:1:cpp)	8	static
+../src/Greenhouse.cpp:122:6:void writeEEPROM(float)	80	static
+../src/Greenhouse.cpp:165:6:void PIN_INT0_IRQHandler()	16	static
+../src/Greenhouse.cpp:182:6:void vConfigureTimerForRunTimeStats()	8	static
+../src/Greenhouse.cpp:188:13:void vConfigureInterrupts()	16	static
+../src/Greenhouse.cpp:210:13:void idle_delay()	8	static
+../src/Greenhouse.cpp:215:6:void vReadSensor(void*)	960	static
+../src/Greenhouse.cpp:271:6:void vRotary(void*)	64	static
+../src/Greenhouse.cpp:318:6:void vMenu(void*)	288	static
+../src/Greenhouse.cpp:477:5:int main()	136	static
+../src/Greenhouse.cpp:536:1:void __static_initialization_and_destruction_0(int, int)	24	static
+../src/Greenhouse.cpp:536:1:cpp)	8	static

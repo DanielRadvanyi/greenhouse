@@ -65,6 +65,7 @@ QueueHandle_t mailboxSetCo2;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
 QueueHandle_t mailboxTemp;
+Fmutex uart_lock;
 
 /* EEPROM Address used for storage */
 #define EEPROM_ADDRESS      0x00000100
@@ -77,7 +78,6 @@ QueueHandle_t mailboxTemp;
 uint32_t buffer[IAP_NUM_BYTES_TO_READ_WRITE / sizeof(uint32_t)];
 
 //testing for eeprom
-#define TESTSTRING "STRING"
 /*****************************************************************************
  * Private functions
  ****************************************************************************/
@@ -119,8 +119,11 @@ static void ShowString(char *str) {
 }
 
 // Write to EEPROM
-void writeEEPROM(){
+void writeEEPROM(float co2){
 	vTaskSuspendAll(); //Suspend tasks
+
+	char array[10];
+	sprintf(array, "%f", co2);
 
 	// variables
 	uint8_t *ptr = (uint8_t *) buffer;
@@ -131,21 +134,12 @@ void writeEEPROM(){
 	strncpy((char *) ptr, CHKTAG, CHKTAG_SIZE);
 
 	// Setup given string
-	strcpy((char *) &ptr[4], TESTSTRING);
-	index = strlen(TESTSTRING);
+	strcpy((char *) &ptr[4], array);
+	index = strlen(array);
 	ptr[3] = (uint8_t) index;
 
 	// Write to EEPROM
 	ret_code = Chip_EEPROM_Write(EEPROM_ADDRESS, ptr, IAP_NUM_BYTES_TO_READ_WRITE);
-
-	// Check success
-	if (ret_code == IAP_CMD_SUCCESS) {
-		DEBUGOUT("EEPROM write passed\r\n");
-	}else {
-		char buf[40];
-		snprintf(buf, 40, "EEPROM write failed, return code is: %x\r\n", ret_code);
-		DEBUGOUT(buf);
-	}
 
 	xTaskResumeAll(); //Resume tasks
 }
@@ -236,7 +230,9 @@ void vReadSensor(void *pvParameters){
 		// Write rh to the rh MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxRh, &rh, 0)) {
+			uart_lock.lock();
 			dbgu->write("Failed to send RH data, queue full.\r\n");
+			uart_lock.unlock();
 		}
 
 		co2 = CO2.read()*10.0;
@@ -244,12 +240,16 @@ void vReadSensor(void *pvParameters){
 		// Write co2 to the co2 MAILBOX.
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxCo2, &co2, 0)) {
+			uart_lock.lock();
 			dbgu->write("Failed to send CO2 data, queue full.\r\n");
+			uart_lock.unlock();
 		}
 
 		temp = TEMP.read()/10.0;
 		if( !xQueueSend(mailboxTemp, &temp, 0)) {
+			uart_lock.lock();
 			dbgu->write("Failed to send TEMP data, queue full.\r\n");
+			uart_lock.unlock();
 		}
 		vTaskDelay(10);
 	}
@@ -269,7 +269,9 @@ void vRotary(void *pvParameters){
 		if(button.read()){
 			signal = 3;
 			xQueueSendToBack(menuQueue, &signal, 0 );
+			uart_lock.lock();
 			dbgu->write((const char*)"button\r\n");
+			uart_lock.unlock();
 			vTaskDelay(350);
 		}
 		if(xQueueReceive(rotaryQueue, &clockwise, (TickType_t) 10)){
@@ -282,11 +284,15 @@ void vRotary(void *pvParameters){
 				if(clockwise){
 					signal = 1;
 					xQueueSendToBack(menuQueue, &signal, 0 );
+					uart_lock.lock();
 					dbgu->write((const char*)"clockwise\r\n");
+					uart_lock.unlock();
 				}else{
 					signal = 2;
 					xQueueSendToBack(menuQueue, &signal, 0 );
+					uart_lock.lock();
 					dbgu->write((const char*)"counterclockwise\r\n");
+					uart_lock.unlock();
 				}
 				prev_timestamp = timestamp;
 			}
@@ -374,8 +380,17 @@ void vMenu(void *pvParameters) {
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
 				menu.event(MenuItem::ok);
-
 				menu.event(MenuItem::back);
+
+
+				float co2target = editCo2->getValueF();
+				char buf[20];
+				snprintf(buf, 20, "CO2 set to: %f", co2target);
+				uart_lock.lock();
+				dbgu->write(buf);
+				uart_lock.unlock();
+				writeEEPROM(co2target);
+
 				menuItem = nullptr;
 			}
 		} else {
@@ -472,14 +487,13 @@ int main(void){
 	if (ret_code != IAP_CMD_SUCCESS) {
 		char buf[25];
 		snprintf(buf, 25, "Command failed to execute, return code is: %x\r\n", ret_code);
+		uart_lock.lock();
 		dbgu->write(buf);
+		uart_lock.unlock();
 	}
 	// Check and display string if it exists
 	ShowString((char *) ptr);
 	xTaskResumeAll();
-
-
-	writeEEPROM();
 
 	// Queue creations
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
