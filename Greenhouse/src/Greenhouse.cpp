@@ -44,7 +44,6 @@
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
-static QueueHandle_t rotaryQueue;
 static DigitalIoPin siga(0, 5, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 6, DigitalIoPin::input, true);
 modbusConfig modbus;
@@ -60,6 +59,8 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
+QueueHandle_t menuQueue;
+QueueHandle_t rotaryQueue;
 
 /*****************************************************************************
  * Private functions
@@ -130,7 +131,6 @@ static void idle_delay()
 
 static void vSensor(void *pvParameters){
 
-	char buff[40];
 	SensorData sensor_event;
 
 	while(1)  {
@@ -148,20 +148,16 @@ void vRotary(void *pvParameters){
 	bool clockwise = false;
 	int timestamp;
 	int prev_timestamp = 0;
-	/**/
-	/* UART port config */
-	LpcPinMap none = {-1, -1}; // unused pin has negative values in it
-	LpcPinMap txpin = { 0, 18 }; // transmit pin that goes to debugger's UART->USB converter
-	LpcPinMap rxpin = { 0, 13 }; // receive pin that goes to debugger's UART->USB converter
-	LpcUartConfig cfg = { LPC_USART0, 115200, UART_CFG_DATALEN_8 | UART_CFG_PARITY_NONE | UART_CFG_STOPLEN_1, false, txpin, rxpin, none, none };
-
-	LpcUart *dbgu = new LpcUart(cfg);
 
 
+	LpcUart*dbgu = static_cast<LpcUart *>(pvParameters);
 	while(1){/**/
 		bool received=false;
+		int signal;
 		DigitalIoPin button(1, 8, DigitalIoPin::pullup, true);
 		if(button.read()){
+			signal = 3;
+			xQueueSendToBack(menuQueue, &signal, 0 );
 			dbgu->write((const char*)"button\r\n");
 			vTaskDelay(350);
 		}
@@ -173,8 +169,12 @@ void vRotary(void *pvParameters){
 			timestamp = xTaskGetTickCount();
 			if (timestamp - prev_timestamp > 70){
 				if(clockwise){
+					signal = 1;
+					xQueueSendToBack(menuQueue, &signal, 0 );
 					dbgu->write((const char*)"clockwise\r\n");
 				}else{
+					signal = 2;
+					xQueueSendToBack(menuQueue, &signal, 0 );
 					dbgu->write((const char*)"counterclockwise\r\n");
 				}
 				prev_timestamp = timestamp;
@@ -186,6 +186,7 @@ void vRotary(void *pvParameters){
 
 
 void vMenu(void *pvParameters) {
+	LpcUart*dbgu = static_cast<LpcUart *>(pvParameters);
 
 	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
 	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
@@ -193,14 +194,11 @@ void vMenu(void *pvParameters) {
 	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
 	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
 	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
-
 	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
-
 
 	DigitalIoPin b1(1, 8, DigitalIoPin::pullup, true); // sw_A2 go up
 	DigitalIoPin b2(0, 5, DigitalIoPin::pullup, true); // sw_A3 go down
 	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 pressed (clicked)
-
 
 	bool b1Pressed = false;
 	bool b2Pressed = false;
@@ -208,7 +206,7 @@ void vMenu(void *pvParameters) {
 
     SimpleMenu menu;
 
-    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 5);
+    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 1);
     DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
 
     PropertyEdit* menuItem = nullptr;
@@ -234,6 +232,10 @@ void vMenu(void *pvParameters) {
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
+
+		/* Receive Rotary signal*/
+		int rotary;
+		bool input = xQueueReceive(menuQueue, &rotary, 0 );
 
 		// press a button -> send an event to menu handler
 		if (menuItem != nullptr) {
@@ -334,10 +336,18 @@ int main(void){
 	heap_monitor_setup();
 	vConfigureInterrupts();
 
-
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
 	mailboxRh = xQueueCreate(3, sizeof(float));
 	mailboxCo2 = xQueueCreate(3, sizeof(float));
+	menuQueue = xQueueCreate(10, sizeof(int));
+
+	/* UART port config */
+	LpcPinMap none = {-1, -1}; // unused pin has negative values in it
+	LpcPinMap txpin = { 0, 18 }; // transmit pin that goes to debugger's UART->USB converter
+	LpcPinMap rxpin = { 0, 13 }; // receive pin that goes to debugger's UART->USB converter
+	LpcUartConfig cfg = { LPC_USART0, 115200, UART_CFG_DATALEN_8 | UART_CFG_PARITY_NONE | UART_CFG_STOPLEN_1, false, txpin, rxpin, none, none };
+
+	LpcUart *dbgu = new LpcUart(cfg);
 
 
 	xTaskCreate(vSensor, "vSensor",
@@ -345,11 +355,11 @@ int main(void){
 			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotary, "vRotary",
-			(configMINIMAL_STACK_SIZE), NULL, (tskIDLE_PRIORITY + 1UL),
+			(configMINIMAL_STACK_SIZE) + 128, dbgu, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);/**/
 
 	xTaskCreate(vMenu, "vMenu",
-			(configMINIMAL_STACK_SIZE) * 4, NULL, (tskIDLE_PRIORITY + 1UL),
+			(configMINIMAL_STACK_SIZE) * 4, dbgu, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);/**/
 
 	/*Start the scheduler */
