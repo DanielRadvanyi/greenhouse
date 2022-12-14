@@ -54,6 +54,7 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
+QueueHandle_t mailboxSetCo2;
 QueueHandle_t mailboxTemp;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
@@ -195,9 +196,8 @@ void vReadSensor(void *params)
 		if( !xQueueSend(mailboxTemp, &temp, 0)) {
 			printf("Failed to send TEMP data, queue full.\r\n");
 		}
+		vTaskDelay(10);
 	}
-
-	vTaskDelay(1);
 }
 
 void vRotary(void *pvParameters){
@@ -260,7 +260,8 @@ void vMenu(void *pvParameters) {
 
     //NoEdit *readRh = new NoEdit(lcd, std::string("RH"));
     DecimalEdit *readRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 1);
-    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
+    DecimalEdit *readCo2 = new DecimalEdit(lcd, std::string("C02"), 0, 10000, 1);
+    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("SET C02"), 200, 10000, 50);
     DecimalEdit *readTemp = new DecimalEdit(lcd, std::string("TEMP"), 0, 60, 1);
 
     PropertyEdit* menuItem = nullptr;
@@ -268,6 +269,7 @@ void vMenu(void *pvParameters) {
     int sleepCounter = 0;
 
     menu.addItem(new MenuItem(readRh));
+    menu.addItem(new MenuItem(readCo2));
     menu.addItem(new MenuItem(editCo2));
     menu.addItem(new MenuItem(readTemp));
 
@@ -280,12 +282,14 @@ void vMenu(void *pvParameters) {
 		// (In the example they use uint_32_t, but we want float values)
 		float rhData = 0.0;
 		float co2Data = 0.0;
+		float setCo2Data = 0.0;
 		float tempData = 0.0;
 
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
+		bool setCo2Updated = xQueueReceive(mailboxSetCo2, &setCo2Data, 0 );
 		bool tempUpdated = xQueueReceive(mailboxTemp, &tempData, 0 );
 
 		/* Receive Rotary signal*/
@@ -341,7 +345,7 @@ void vMenu(void *pvParameters) {
 			} else if (b3Pressed == true) {
 				b3Pressed = false;
 				int menuItemId = menu.getPosition();
-				if (menuItemId == 1) {
+				if (menuItemId == 2) {
 					menu.event(MenuItem::ok);
 					menuItem = editCo2;
 				} else {
@@ -349,14 +353,17 @@ void vMenu(void *pvParameters) {
 				}
 			}
 
-			// Update current Humidity and Co2 values
-			// -> when we are not in the edit menu
+			// Update current values
+			// -> when we are not in the edit menu (only simulator values)
 			// -> when the value has been updated
 			if (rhUpdated) {
 				readRh->setValue(rhData);
 			}
 			if (co2Updated) {
-				editCo2->setValue(co2Data);
+				readCo2->setValue(co2Data); // not the value edited with the rotary
+			}
+			if (setCo2Updated) {
+				editCo2->setValue(setCo2Data);
 			}
 			if (tempUpdated) {
 				readTemp->setValue(tempData);
@@ -369,7 +376,7 @@ void vMenu(void *pvParameters) {
 		}
 
 		// no button is pressed for an amount of time -> call back event
-		if (sleepCounter >= 10000) {
+		if (sleepCounter >= 2000) {
 			b1Pressed = false;
 			b2Pressed = false;
 			b3Pressed = false;
@@ -380,8 +387,8 @@ void vMenu(void *pvParameters) {
 			menuItem = nullptr;
 		}
 
-		vTaskDelay(1);
-		sleepCounter +=1;
+		vTaskDelay(10);
+		sleepCounter +=10;
 	}
 }
 
