@@ -1,2 +1,2 @@
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/iocon_15xx.h:95:20:Chip_IOCON_PinMuxSet	24	static
+C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/iocon_15xx.h:95:20:Chip_IOCON_PinMuxSet	24	static
 ../src/iocon_15xx.c:49:6:Chip_IOCON_SetPinMuxing	32	static

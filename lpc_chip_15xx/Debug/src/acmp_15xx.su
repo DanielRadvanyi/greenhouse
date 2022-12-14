@@ -1,4 +1,4 @@
-C:\Users\aivua\Documents\MCUXpressoIDE_11.6.0_8187\example\greenhouse_proj\lpc_chip_15xx\inc/sysctl_15xx.h:185:20:Chip_SYSCTL_PeriphReset	16	static
+C:\Users\Administrator\OneDrive\Documents\Metropolia\HACKATHON\greenhouse_proj\lpc_chip_15xx\inc/sysctl_15xx.h:185:20:Chip_SYSCTL_PeriphReset	16	static
 ../src/acmp_15xx.c:48:6:Chip_ACMP_Init	16	static
 ../src/acmp_15xx.c:57:6:Chip_ACMP_Deinit	16	static
 ../src/acmp_15xx.c:65:6:Chip_ACMP_SetIntEdgeSelection	32	static

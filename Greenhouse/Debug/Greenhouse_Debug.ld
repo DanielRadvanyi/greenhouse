@@ -6,7 +6,7 @@
  * Generated linker script file for LPC1549
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v11.6.0 [Build 8187] [2022-07-13] on 13 Dec 2022, 13:10:24
+ * MCUXpresso IDE v11.5.0 [Build 7232] [2022-01-11] on Dec 14, 2022, 6:34:04 PM
  */
 
 INCLUDE "Greenhouse_Debug_library.ld"
@@ -32,17 +32,12 @@ SECTIONS
         LONG(LOADADDR(.data_RAM2));
         LONG(    ADDR(.data_RAM2));
         LONG(  SIZEOF(.data_RAM2));
-        LONG(LOADADDR(.data_RAM3));
-        LONG(    ADDR(.data_RAM3));
-        LONG(  SIZEOF(.data_RAM3));
         __data_section_table_end = .;
         __bss_section_table = .;
         LONG(    ADDR(.bss));
         LONG(  SIZEOF(.bss));
         LONG(    ADDR(.bss_RAM2));
         LONG(  SIZEOF(.bss_RAM2));
-        LONG(    ADDR(.bss_RAM3));
-        LONG(  SIZEOF(.bss_RAM3));
         __bss_section_table_end = .;
         __section_table_end = . ;
         /* End of Global Section Table */
@@ -83,7 +78,6 @@ SECTIONS
             . = ALIGN(4);
             /* End C++ */
     } > MFlash256
-
     /*
      * for exception handling/unwind - some Newlib functions (in common
      * with C++ and STDC++) use this.
@@ -102,39 +96,21 @@ SECTIONS
  
     _etext = .;
         
-    /* DATA section for Ram1_16 */
+    /* DATA section for Ram2_4 */
 
     .data_RAM2 : ALIGN(4)
     {
         FILL(0xff)
         PROVIDE(__start_data_RAM2 = .) ;
-        PROVIDE(__start_data_Ram1_16 = .) ;
-        *(.ramfunc.$RAM2)
-        *(.ramfunc.$Ram1_16)
-        *(.data.$RAM2)
-        *(.data.$Ram1_16)
-        *(.data.$RAM2.*)
-        *(.data.$Ram1_16.*)
-        . = ALIGN(4) ;
-        PROVIDE(__end_data_RAM2 = .) ;
-        PROVIDE(__end_data_Ram1_16 = .) ;
-     } > Ram1_16 AT>MFlash256
-
-    /* DATA section for Ram2_4 */
-
-    .data_RAM3 : ALIGN(4)
-    {
-        FILL(0xff)
-        PROVIDE(__start_data_RAM3 = .) ;
         PROVIDE(__start_data_Ram2_4 = .) ;
-        *(.ramfunc.$RAM3)
+        *(.ramfunc.$RAM2)
         *(.ramfunc.$Ram2_4)
-        *(.data.$RAM3)
+        *(.data.$RAM2)
         *(.data.$Ram2_4)
-        *(.data.$RAM3.*)
+        *(.data.$RAM2.*)
         *(.data.$Ram2_4.*)
         . = ALIGN(4) ;
-        PROVIDE(__end_data_RAM3 = .) ;
+        PROVIDE(__end_data_RAM2 = .) ;
         PROVIDE(__end_data_Ram2_4 = .) ;
      } > Ram2_4 AT>MFlash256
 
@@ -145,15 +121,15 @@ SECTIONS
         KEEP(*(.bss.$RESERVED*))
        . = ALIGN(4) ;
         _end_uninit_RESERVED = .;
-    } > Ram0_16 AT> Ram0_16
+    } > Ram0_16_32 AT> Ram0_16_32
 
-    /* Main DATA section (Ram0_16) */
+    /* Main DATA section (Ram0_16_32) */
     .data : ALIGN(4)
     {
        FILL(0xff)
        _data = . ;
        PROVIDE(__start_data_RAM = .) ;
-       PROVIDE(__start_data_Ram0_16 = .) ;
+       PROVIDE(__start_data_Ram0_16_32 = .) ;
        *(vtable)
        *(.ramfunc*)
        KEEP(*(CodeQuickAccess))
@@ -163,34 +139,20 @@ SECTIONS
        . = ALIGN(4) ;
        _edata = . ;
        PROVIDE(__end_data_RAM = .) ;
-       PROVIDE(__end_data_Ram0_16 = .) ;
-    } > Ram0_16 AT>MFlash256
+       PROVIDE(__end_data_Ram0_16_32 = .) ;
+    } > Ram0_16_32 AT>MFlash256
 
-    /* BSS section for Ram1_16 */
+    /* BSS section for Ram2_4 */
     .bss_RAM2 : ALIGN(4)
     {
        PROVIDE(__start_bss_RAM2 = .) ;
-       PROVIDE(__start_bss_Ram1_16 = .) ;
-       *(.bss.$RAM2)
-       *(.bss.$Ram1_16)
-       *(.bss.$RAM2.*)
-       *(.bss.$Ram1_16.*)
-       . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(__end_bss_RAM2 = .) ;
-       PROVIDE(__end_bss_Ram1_16 = .) ;
-    } > Ram1_16 AT> Ram1_16
-
-    /* BSS section for Ram2_4 */
-    .bss_RAM3 : ALIGN(4)
-    {
-       PROVIDE(__start_bss_RAM3 = .) ;
        PROVIDE(__start_bss_Ram2_4 = .) ;
-       *(.bss.$RAM3)
+       *(.bss.$RAM2)
        *(.bss.$Ram2_4)
-       *(.bss.$RAM3.*)
+       *(.bss.$RAM2.*)
        *(.bss.$Ram2_4.*)
        . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(__end_bss_RAM3 = .) ;
+       PROVIDE(__end_bss_RAM2 = .) ;
        PROVIDE(__end_bss_Ram2_4 = .) ;
     } > Ram2_4 AT> Ram2_4
 
@@ -199,41 +161,27 @@ SECTIONS
     {
         _bss = .;
         PROVIDE(__start_bss_RAM = .) ;
-        PROVIDE(__start_bss_Ram0_16 = .) ;
+        PROVIDE(__start_bss_Ram0_16_32 = .) ;
         *(.bss*)
         *(COMMON)
         . = ALIGN(4) ;
         _ebss = .;
         PROVIDE(__end_bss_RAM = .) ;
-        PROVIDE(__end_bss_Ram0_16 = .) ;
+        PROVIDE(__end_bss_Ram0_16_32 = .) ;
         PROVIDE(end = .);
-    } > Ram0_16 AT> Ram0_16
+    } > Ram0_16_32 AT> Ram0_16_32
 
-    /* NOINIT section for Ram1_16 */
+    /* NOINIT section for Ram2_4 */
     .noinit_RAM2 (NOLOAD) : ALIGN(4)
     {
        PROVIDE(__start_noinit_RAM2 = .) ;
-       PROVIDE(__start_noinit_Ram1_16 = .) ;
-       *(.noinit.$RAM2)
-       *(.noinit.$Ram1_16)
-       *(.noinit.$RAM2.*)
-       *(.noinit.$Ram1_16.*)
-       . = ALIGN(4) ;
-       PROVIDE(__end_noinit_RAM2 = .) ;
-       PROVIDE(__end_noinit_Ram1_16 = .) ;
-    } > Ram1_16 AT> Ram1_16
-
-    /* NOINIT section for Ram2_4 */
-    .noinit_RAM3 (NOLOAD) : ALIGN(4)
-    {
-       PROVIDE(__start_noinit_RAM3 = .) ;
        PROVIDE(__start_noinit_Ram2_4 = .) ;
-       *(.noinit.$RAM3)
+       *(.noinit.$RAM2)
        *(.noinit.$Ram2_4)
-       *(.noinit.$RAM3.*)
+       *(.noinit.$RAM2.*)
        *(.noinit.$Ram2_4.*)
        . = ALIGN(4) ;
-       PROVIDE(__end_noinit_RAM3 = .) ;
+       PROVIDE(__end_noinit_RAM2 = .) ;
        PROVIDE(__end_noinit_Ram2_4 = .) ;
     } > Ram2_4 AT> Ram2_4
 
@@ -242,17 +190,15 @@ SECTIONS
     {
         _noinit = .;
         PROVIDE(__start_noinit_RAM = .) ;
-        PROVIDE(__start_noinit_Ram0_16 = .) ;
+        PROVIDE(__start_noinit_Ram0_16_32 = .) ;
         *(.noinit*)
          . = ALIGN(4) ;
         _end_noinit = .;
        PROVIDE(__end_noinit_RAM = .) ;
-       PROVIDE(__end_noinit_Ram0_16 = .) ;        
-    } > Ram0_16 AT> Ram0_16
-
+       PROVIDE(__end_noinit_Ram0_16_32 = .) ;        
+    } > Ram0_16_32 AT> Ram0_16_32
     PROVIDE(_pvHeapStart = DEFINED(__user_heap_base) ? __user_heap_base : .);
-
-    PROVIDE(_vStackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_Ram0_16 - 0);
+    PROVIDE(_vStackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_Ram0_16_32 - 0);
 
     /* ## Create checksum value (used in startup) ## */
     PROVIDE(__valid_user_code_checksum = 0 - 

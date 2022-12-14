@@ -9,6 +9,7 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include src/subdir.mk
+-include subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -49,7 +50,7 @@ liblpc_chip_15xx.a: $(OBJS) $(USER_OBJS) makefile objects.mk $(OPTIONAL_TOOL_DEP
 
 # Other Targets
 clean:
-	-$(RM) liblpc_chip_15xx.a
+	-$(RM) $(OBJS)$(ARCHIVES)$(C_DEPS) liblpc_chip_15xx.a
 	-@echo ' '
 
 post-build:
@@ -57,6 +58,6 @@ post-build:
 	-arm-none-eabi-size "liblpc_chip_15xx.a" ; # arm-none-eabi-objdump -h -S "liblpc_chip_15xx.a" >"liblpc_chip_15xx.lss"
 	-@echo ' '
 
-.PHONY: all clean dependents main-build post-build
+.PHONY: all clean dependents post-build
 
 -include ../makefile.targets
