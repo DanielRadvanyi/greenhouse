@@ -38,11 +38,14 @@
  ****************************************************************************/
 static DigitalIoPin siga(0, 5, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 6, DigitalIoPin::input, true);
+
 modbusConfig modbus;
+
 typedef struct TaskData {
 	LpcUart *uart;
 	Fmutex *guard;
 } TaskData;
+
 struct SensorData {
 	int temp;
 	int rh;
@@ -51,6 +54,7 @@ struct SensorData {
 };
 QueueHandle_t mailboxRh;
 QueueHandle_t mailboxCo2;
+QueueHandle_t mailboxTemp;
 QueueHandle_t menuQueue;
 QueueHandle_t rotaryQueue;
 
@@ -150,24 +154,25 @@ void vReadSensor(void *params)
 	node3.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister RH(&node3, 256, true);
 
-	/*
+
 	ModbusMaster node4(241);
 	node4.begin(9600); // all nodes must operate at the same speed!
 	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
-	ModbusRegister TEMP(&node4, 256, true);
-	*/
+	ModbusRegister TEMP(&node4, 257, true);
+
 
 	ModbusMaster node5(240); // Create modbus object that connects to slave id 240
 	node5.begin(9600); // all nodes must operate at the same speed!
 	node5.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister CO2(&node5, 257, true);
 
-	//DigitalIoPin relay(0, 27, DigitalIoPin::output); // CO2 relay
-	//relay.write(0);
+	// CO2 relay valve
+	DigitalIoPin relay(0, 27, DigitalIoPin::output);
+	relay.write(0);
 
 	while(true)
 	{
-		float rh, co2;
+		float rh, co2, temp;
 		//char buffer1[32], buffer3[32];
 
 		rh = RH.read()/10.0;
@@ -184,6 +189,11 @@ void vReadSensor(void *params)
 		// Third parameter 0 means don't wait for the queue to have space.
 		if( !xQueueSend(mailboxCo2, &co2, 0)) {
 			printf("Failed to send CO2 data, queue full.\r\n");
+		}
+
+		temp = TEMP.read()/10.0;
+		if( !xQueueSend(mailboxTemp, &temp, 0)) {
+			printf("Failed to send TEMP data, queue full.\r\n");
 		}
 	}
 
@@ -251,6 +261,7 @@ void vMenu(void *pvParameters) {
     //NoEdit *readRh = new NoEdit(lcd, std::string("RH"));
     DecimalEdit *readRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 1);
     DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
+    DecimalEdit *readTemp = new DecimalEdit(lcd, std::string("TEMP"), 0, 60, 1);
 
     PropertyEdit* menuItem = nullptr;
 
@@ -258,6 +269,7 @@ void vMenu(void *pvParameters) {
 
     menu.addItem(new MenuItem(readRh));
     menu.addItem(new MenuItem(editCo2));
+    menu.addItem(new MenuItem(readTemp));
 
 	lcd->begin(16,2);
 	lcd->setCursor(0,0);
@@ -268,10 +280,13 @@ void vMenu(void *pvParameters) {
 		// (In the example they use uint_32_t, but we want float values)
 		float rhData = 0.0;
 		float co2Data = 0.0;
+		float tempData = 0.0;
+
 		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
 		// True when a value is read and false when queue is empty
 		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
 		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
+		bool tempUpdated = xQueueReceive(mailboxTemp, &tempData, 0 );
 
 		/* Receive Rotary signal*/
 		int rotary=0;
@@ -343,6 +358,9 @@ void vMenu(void *pvParameters) {
 			if (co2Updated) {
 				editCo2->setValue(co2Data);
 			}
+			if (tempUpdated) {
+				readTemp->setValue(tempData);
+			}
 		}
 
 		// reset counter
@@ -376,6 +394,7 @@ int main(void){
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
 	mailboxRh = xQueueCreate(3, sizeof(int32_t));
 	mailboxCo2 = xQueueCreate(3, sizeof(int32_t));
+	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
 	menuQueue = xQueueCreate(10, sizeof(int));
 
 	/* UART port config */

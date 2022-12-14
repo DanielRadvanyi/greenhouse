@@ -58,10 +58,10 @@ void DecimalEdit::display() {
 	lcd->setCursor(0,1);
 	char s[17];
 	if(focus) {
-		snprintf(s, 17, "     [%4f]     ", std::ceil(edit * 10.0) / 10.0);
+		snprintf(s, 17, "     [%.2f]     ", std::ceil(edit * 10.0) / 10.0);
 	}
 	else {
-		snprintf(s, 17, "      %4f      ", std::ceil(edit * 10.0) / 10.0);
+		snprintf(s, 17, "      %.2f      ", std::ceil(edit * 10.0) / 10.0);
 	}
 	lcd->print(s);
 }
