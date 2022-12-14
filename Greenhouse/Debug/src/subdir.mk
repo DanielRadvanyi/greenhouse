@@ -4,15 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/DecimalEdit.cpp \
 ../src/DigitalIoPin.cpp \
 ../src/Fmutex.cpp \
 ../src/Greenhouse.cpp \
 ../src/I2C.cpp \
+../src/ITM_print.cpp \
 ../src/LiquidCrystal.cpp \
 ../src/LpcUart.cpp \
+../src/MenuItem.cpp \
 ../src/ModbusMaster.cpp \
 ../src/ModbusRegister.cpp \
 ../src/SerialPort.cpp \
+../src/SimpleMenu.cpp \
 ../src/cr_cpp_config.cpp \
 ../src/cr_startup_lpc15xx.cpp \
 ../src/modbus.cpp \
@@ -20,6 +24,7 @@ CPP_SRCS += \
 ../src/serial_port.cpp 
 
 C_SRCS += \
+../src/ITM_write.c \
 ../src/PlaintextMQTTExample.c \
 ../src/backoff_algorithm.c \
 ../src/core_mqtt.c \
@@ -31,16 +36,21 @@ C_SRCS += \
 ../src/using_plaintext.c 
 
 OBJS += \
+./src/DecimalEdit.o \
 ./src/DigitalIoPin.o \
 ./src/Fmutex.o \
 ./src/Greenhouse.o \
 ./src/I2C.o \
+./src/ITM_print.o \
+./src/ITM_write.o \
 ./src/LiquidCrystal.o \
 ./src/LpcUart.o \
+./src/MenuItem.o \
 ./src/ModbusMaster.o \
 ./src/ModbusRegister.o \
 ./src/PlaintextMQTTExample.o \
 ./src/SerialPort.o \
+./src/SimpleMenu.o \
 ./src/backoff_algorithm.o \
 ./src/core_mqtt.o \
 ./src/core_mqtt_serializer.o \
@@ -56,15 +66,19 @@ OBJS += \
 ./src/using_plaintext.o 
 
 CPP_DEPS += \
+./src/DecimalEdit.d \
 ./src/DigitalIoPin.d \
 ./src/Fmutex.d \
 ./src/Greenhouse.d \
 ./src/I2C.d \
+./src/ITM_print.d \
 ./src/LiquidCrystal.d \
 ./src/LpcUart.d \
+./src/MenuItem.d \
 ./src/ModbusMaster.d \
 ./src/ModbusRegister.d \
 ./src/SerialPort.d \
+./src/SimpleMenu.d \
 ./src/cr_cpp_config.d \
 ./src/cr_startup_lpc15xx.d \
 ./src/modbus.d \
@@ -72,6 +86,7 @@ CPP_DEPS += \
 ./src/serial_port.d 
 
 C_DEPS += \
+./src/ITM_write.d \
 ./src/PlaintextMQTTExample.d \
 ./src/backoff_algorithm.d \
 ./src/core_mqtt.d \

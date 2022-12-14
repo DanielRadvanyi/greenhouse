@@ -37,11 +37,14 @@
 #include <mutex>
 #include "Fmutex.h"
 #include "modbus.h"
+#include "SimpleMenu.h"
+#include "ITM_print.h"
+#include "DecimalEdit.h"
 
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
-static QueueHandle_t q;
+static QueueHandle_t rotaryQueue;
 static DigitalIoPin siga(0, 5, DigitalIoPin::input, true);
 static DigitalIoPin sigb(0, 6, DigitalIoPin::input, true);
 modbusConfig modbus;
@@ -55,6 +58,9 @@ struct SensorData {
 	int co2;
 	uint64_t time_stamp;
 };
+QueueHandle_t mailboxRh;
+QueueHandle_t mailboxCo2;
+
 /*****************************************************************************
  * Private functions
  ****************************************************************************/
@@ -77,7 +83,7 @@ void PIN_INT0_IRQHandler(void) {
 	portBASE_TYPE xHigherPriorityWoken = pdFALSE;
 
 	clockwise = siga.read();
-	xQueueSendToBackFromISR(q, (void *) &clockwise, &xHigherPriorityWoken);
+	xQueueSendToBackFromISR(rotaryQueue, (void *) &clockwise, &xHigherPriorityWoken);
 
     Chip_PININT_ClearIntStatus(LPC_GPIO_PIN_INT, PININTCH(0));
 	portEND_SWITCHING_ISR(xHigherPriorityWoken);
@@ -157,14 +163,13 @@ void vRotary(void *pvParameters){
 		DigitalIoPin button(1, 8, DigitalIoPin::pullup, true);
 		if(button.read()){
 			dbgu->write((const char*)"button\r\n");
-
 			vTaskDelay(350);
 		}
-		if(xQueueReceive(q, &clockwise, (TickType_t) 10)){
+		if(xQueueReceive(rotaryQueue, &clockwise, (TickType_t) 10)){
 			received = true;
 		}
 		if(received){
-			xQueueReceive(q, &clockwise, (TickType_t) 150);
+			xQueueReceive(rotaryQueue, &clockwise, (TickType_t) 150);
 			timestamp = xTaskGetTickCount();
 			if (timestamp - prev_timestamp > 70){
 				if(clockwise){
@@ -179,38 +184,172 @@ void vRotary(void *pvParameters){
 	}
 }
 
-/**/static void vDisplay(void *pvParams){
-	//LCD configuration
+
+void vMenu(void *pvParameters) {
+
 	DigitalIoPin *rs = new DigitalIoPin(0, 29, DigitalIoPin::output);
 	DigitalIoPin *en = new DigitalIoPin(0, 9, DigitalIoPin::output);
 	DigitalIoPin *d4 = new DigitalIoPin(0, 10, DigitalIoPin::output);
 	DigitalIoPin *d5 = new DigitalIoPin(0, 16, DigitalIoPin::output);
 	DigitalIoPin *d6 = new DigitalIoPin(1, 3, DigitalIoPin::output);
 	DigitalIoPin *d7 = new DigitalIoPin(0, 0, DigitalIoPin::output);
-	LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-	while(true){
-		vTaskDelay(500);
+	LiquidCrystal *lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
+
+
+	DigitalIoPin b1(1, 8, DigitalIoPin::pullup, true); // sw_A2 go up
+	DigitalIoPin b2(0, 5, DigitalIoPin::pullup, true); // sw_A3 go down
+	DigitalIoPin b3(0, 6, DigitalIoPin::pullup, true); // sw_A4 pressed (clicked)
+
+
+	bool b1Pressed = false;
+	bool b2Pressed = false;
+	bool b3Pressed = false;
+
+    SimpleMenu menu;
+
+    DecimalEdit *editRh = new DecimalEdit(lcd, std::string("RH"), 0, 100, 5);
+    DecimalEdit *editCo2 = new DecimalEdit(lcd, std::string("C02"), 200, 10000, 50);
+
+    PropertyEdit* menuItem = nullptr;
+
+    int sleepCounter = 0;
+
+    menu.addItem(new MenuItem(editRh));
+    menu.addItem(new MenuItem(editCo2));
+
+    editRh->setValue(0.0);
+	editCo2->setValue(0.0);
+
+	lcd->begin(16,2);
+	lcd->setCursor(0,0);
+	menu.event(MenuItem::show);
+
+	while(1) {
+		// Read queue values into these variables
+		// (In the example they use uint_32_t, but we want float values)
+		float rhData = 0.0;
+		float co2Data = 0.0;
+		// Read mailbox. 0 means don't wait for queue, return immediately if queue empty
+		// True when a value is read and false when queue is empty
+		bool rhUpdated = xQueueReceive(mailboxRh, &rhData, 0 );
+		bool co2Updated = xQueueReceive(mailboxCo2, &co2Data, 0 );
+
+		// press a button -> send an event to menu handler
+		if (menuItem != nullptr) {
+			// We have a menuItem selected
+			// We are in edit property mode
+			if (b1.read()) {
+				b1Pressed = true;
+			} else if (b1Pressed == true) {
+				b1Pressed = false;
+				menu.event(MenuItem::up);
+			}
+
+			if (b2.read()) {
+				b2Pressed = true;
+			} else if (b2Pressed == true) {
+				b2Pressed = false;
+				menu.event(MenuItem::down);
+			}
+
+			if (b3.read()) {
+				b3Pressed = true;
+			} else if (b3Pressed == true) {
+				b3Pressed = false;
+				menu.event(MenuItem::ok);
+
+				menu.event(MenuItem::back);
+				menuItem = nullptr;
+
+			}
+		} else {
+			// No menu item selected
+			// We are in the top level menu
+			if (b1.read()) {
+				b1Pressed = true;
+			} else if (b1Pressed == true) {
+				b1Pressed = false;
+				menu.event(MenuItem::down);
+			}
+
+			if (b2.read()) {
+				b2Pressed = true;
+			} else if (b2Pressed == true) {
+				b2Pressed = false;
+				menu.event(MenuItem::up);
+			}
+
+			if (b3.read()) {
+				b3Pressed = true;
+			} else if (b3Pressed == true) {
+				b3Pressed = false;
+				menu.event(MenuItem::ok);
+				int menuItemId = menu.getPosition();
+				if (menuItemId == 0) {
+					menuItem = editRh;
+				} else if (menuItemId == 1) {
+					menuItem = editCo2;
+				} else {
+					menuItem = nullptr;
+				}
+			}
+
+			// Update current Humidity and Co2 values
+			// -> when we are not in the edit menu
+			// -> when the value has been updated
+			if (rhUpdated) {
+				editRh->setValue(rhData);
+			}
+			if (co2Updated) {
+				editCo2->setValue(co2Data);
+			}
+		}
+
+		// reset counter
+		if (b1.read() || b2.read() || b3.read()) {
+			sleepCounter = 0;
+		}
+
+		// no button is pressed for an amount of time -> call back event
+		if (sleepCounter >= 10000) {
+			b1Pressed = false;
+			b2Pressed = false;
+			b3Pressed = false;
+
+			menu.event(MenuItem::back);
+
+			// cancel setting value of the item
+			menuItem = nullptr;
+		}
+
+		vTaskDelay(1);
+		sleepCounter +=1;
 	}
-
 }
+
+
 int main(void){
 	prvSetupHardware();
 	heap_monitor_setup();
 	vConfigureInterrupts();
 
 
-	q = xQueueCreate(50, sizeof(bool));
+	rotaryQueue = xQueueCreate(50, sizeof(bool));
+	mailboxRh = xQueueCreate(3, sizeof(float));
+	mailboxCo2 = xQueueCreate(3, sizeof(float));
+
+
 	xTaskCreate(vSensor, "vSensor",
 			((configMINIMAL_STACK_SIZE) + 128), NULL, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotary, "vRotary",
-			((configMINIMAL_STACK_SIZE) * 4), NULL, (tskIDLE_PRIORITY + 1UL),
+			(configMINIMAL_STACK_SIZE), NULL, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);/**/
 
-	xTaskCreate(vDisplay, "vDisplay",
-			(configMINIMAL_STACK_SIZE)+128, NULL, (tskIDLE_PRIORITY + 1UL),
+	xTaskCreate(vMenu, "vMenu",
+			(configMINIMAL_STACK_SIZE) * 4, NULL, (tskIDLE_PRIORITY + 1UL),
 			(TaskHandle_t *) NULL);/**/
 
 	/*Start the scheduler */
