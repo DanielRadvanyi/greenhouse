@@ -215,6 +215,7 @@ void vReadSensor(void *pvParameters){
 	node4.idle(idle_delay); // idle function is called while waiting for reply from slave
 	ModbusRegister TEMP(&node4, 257, true);
 
+	vTaskDelay(5);
 
 	ModbusMaster node5(240); // Create modbus object that connects to slave id 240
 	node5.begin(9600); // all nodes must operate at the same speed!
