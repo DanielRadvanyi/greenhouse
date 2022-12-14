@@ -401,6 +401,7 @@ int main(void){
 	rotaryQueue = xQueueCreate(50, sizeof(bool));
 	mailboxRh = xQueueCreate(3, sizeof(int32_t));
 	mailboxCo2 = xQueueCreate(3, sizeof(int32_t));
+	mailboxSetCo2 = xQueueCreate(3, sizeof(int32_t));
 	mailboxTemp = xQueueCreate(3, sizeof(int32_t));
 	menuQueue = xQueueCreate(10, sizeof(int));
 
@@ -418,7 +419,7 @@ int main(void){
 			(TaskHandle_t *) NULL);*/
 
 	xTaskCreate(vReadSensor, "vReadSensor",
-				((configMINIMAL_STACK_SIZE) * 4), NULL, (tskIDLE_PRIORITY + 1UL),
+				((configMINIMAL_STACK_SIZE) * 5), NULL, (tskIDLE_PRIORITY + 1UL),
 				(TaskHandle_t *) NULL);
 
 	xTaskCreate(vRotary, "vRotary",
